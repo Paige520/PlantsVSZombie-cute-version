@@ -1,4 +1,4 @@
-#ifndef __GAME_SCENE_H__
+ï»¿#ifndef __GAME_SCENE_H__
 #define __GAME_SCENE_H__
 
 #include "cocos2d.h"
@@ -12,11 +12,11 @@ public:
 
     CREATE_FUNC(GameScene);
 private:
-    // ÓÎÏ·±³¾°ÔªËØ
+    // æ¸¸æˆèƒŒæ™¯å…ƒç´ 
     cocos2d::Sprite* background = Sprite::create("fightbackground.jpg");
     cocos2d::Sprite* shop= Sprite::create("shop.png");
 
-    // ±³¾°Í¼ĞÅÏ¢
+    // èƒŒæ™¯å›¾ä¿¡æ¯
     float scaledBgWidth;
     float scaledBgHeight;
     float bgScreenStartX;
@@ -24,28 +24,56 @@ private:
     float bgScreenEndX;
     float bgScreenEndY;
 
-    // Íø¸ñÏµÍ³
+    // ç½‘æ ¼ç³»ç»Ÿ
     const int GRID_ROWS = 5;
     const int GRID_COLS = 9;
-    float gridStartX;     // ²İµØÍø¸ñÆğÊ¼X×ø±ê
-    float gridStartY;     // ²İµØÍø¸ñÆğÊ¼Y×ø±ê
-    float gridWidth;      // ²İµØÍø¸ñ¿í¶È
-    float gridHeight;     // ²İµØÍø¸ñ¸ß¶È
-    float cellWidth;      // µ¥Ôª¸ñ¿í¶È
-    float cellHeight;     // µ¥Ôª¸ñ¸ß¶È
+    float gridStartX;     // è‰åœ°ç½‘æ ¼èµ·å§‹Xåæ ‡
+    float gridStartY;     // è‰åœ°ç½‘æ ¼èµ·å§‹Yåæ ‡
+    float gridWidth;      // è‰åœ°ç½‘æ ¼å®½åº¦
+    float gridHeight;     // è‰åœ°ç½‘æ ¼é«˜åº¦
+    float cellWidth;      // å•å…ƒæ ¼å®½åº¦
+    float cellHeight;     // å•å…ƒæ ¼é«˜åº¦
 
-    // ³õÊ¼»¯º¯Êı
+    // é˜³å…‰ç³»ç»Ÿç›¸å…³
+    cocos2d::Label* sunshineLabel;
+    int sunshineCount;
+    cocos2d::Sprite* sunshineIcon; 
+    cocos2d::Vector<cocos2d::Sprite*> sunshines;
+
+    //èœå•è®¾ç½®
+    cocos2d::Menu* pauseMenu;                 // æš‚åœèœå•
+    cocos2d::LayerColor* pauseLayer;          // æš‚åœèƒŒæ™¯å±‚
+    cocos2d::Label* speedLabel;               // é€Ÿåº¦æ˜¾ç¤ºæ ‡ç­¾
+    float speed;                              // æ¸¸æˆé€Ÿåº¦ (1.0/1.5/2.0)
+
+    // åˆå§‹åŒ–å‡½æ•°
     void initBackground();
     void initShop();
     void initGrid();
+    void initSunshineSystem();
+    void generateSunshine();
 
-
-    // ¹¤¾ßº¯Êı
+    // å·¥å…·å‡½æ•°
     void calculateBackgroundInfo();
-    // ×ø±ê×ª»»º¯Êı
+    // åæ ‡è½¬æ¢å‡½æ•°
     cocos2d::Vec2 getGridCenter(int row, int col);
     std::pair<int, int> getGridFromPosition(const cocos2d::Vec2& position);
     bool isGridPositionValid(int row, int col);
+
+    // é˜³å…‰ç›¸å…³å‡½æ•°
+    void createSunshine(const cocos2d::Vec2& position);
+    void collectSunshine(cocos2d::Sprite* sunshine);
+    void updateSunshineCount(int delta);
+
+    //èœå•ç›¸å…³å‡½æ•°
+    void createPauseButton();                  // åˆ›å»ºæš‚åœæŒ‰é’®
+    void createPauseMenu();                    // åˆ›å»ºæš‚åœèœå•ç•Œé¢
+    void showPauseMenu();                      // æ˜¾ç¤ºæš‚åœèœå•
+    void hidePauseMenu();                      // éšè—æš‚åœèœå•
+    void restartGame();                        // é‡æ–°å¼€å§‹æ¸¸æˆ
+    void exitToMainMenu();                     // è¿”å›ä¸»èœå•
+    void changeGameSpeed();                    // åˆ‡æ¢æ¸¸æˆé€Ÿåº¦
+    void updateSpeedLabel();                   // æ›´æ–°é€Ÿåº¦æ˜¾ç¤º
 };
 
-#endif // __GAME_SCENE_H__
+#endif 

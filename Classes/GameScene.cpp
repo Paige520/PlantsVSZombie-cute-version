@@ -1,6 +1,7 @@
 #include "GameScene.h"
 #include "SelectScene.h"
 #include "Plant.h"
+#include "Zombie.h"
 #include <iostream>
 #include <random>
 
@@ -25,19 +26,21 @@ bool GameScene::init() {
     selectedPlant = PlantType::NONE; // 初始没有选中植物
     selectedCard = nullptr;
     plantingPreview = nullptr;
+
     for (int i = 0; i < GRID_ROWS; i++) {
         for (int j = 0; j < GRID_COLS; j++) {
             gridPlants[i][j] = nullptr;
         }
     }
 
-    initBackground();
-    initShop();
-    initGrid();
-    initSunshineSystem(); 
-    initPlantCards();
-    createPauseButton();
-    createPauseMenu();
+	initBackground();      // 创建背景
+	initShop();            // 创建商店
+	initGrid();            // 创建网格
+	initSunshineSystem();  // 创建阳光系统
+	initPlantCards();      // 初始化植物卡片
+	createPauseButton();   // 创建暂停按钮
+	createPauseMenu();     // 创建暂停菜单
+    initZombieSystem();    // 初始化僵尸系统
 
     // 添加触摸监听器用于种植
     auto touchListener = EventListenerTouchOneByOne::create();
@@ -90,6 +93,9 @@ bool GameScene::init() {
     this->schedule([this](float dt) {
         this->generateSunshine();
         }, 5.0f, "generate_sunshine");  // 每5秒生成一个阳光
+
+    // 开始更新僵尸状态（每帧调用）
+    this->scheduleUpdate();
     return true;
 }
 //创建背景
@@ -189,7 +195,7 @@ void GameScene::createPlantCard(PlantType type, const Vec2& position, float card
         case PlantType::SUNFLOWER: plantImage = "sunflower.png"; break;
         case PlantType::WALLNUT: plantImage = "nut.png"; break;
         case PlantType::FIRETREE: plantImage = "firetree.png"; break;
-        case PlantType::CHERRYBOMB: plantImage = "cheerybomb.png"; break;
+        case PlantType::CHERRYBOMB: plantImage = "cherrybomb.png"; break;
         default: return;
     }
 
@@ -329,7 +335,7 @@ void GameScene::showPlantingPreview() {
         case PlantType::SUNFLOWER: plantImage = "sunflower.png"; break;
         case PlantType::WALLNUT: plantImage = "nut.png"; break;
         case PlantType::FIRETREE: plantImage = "firetree.png"; break;
-        case PlantType::CHERRYBOMB: plantImage = "cheerybomb.png"; break;
+        case PlantType::CHERRYBOMB: plantImage = "cherrybomb.png"; break;
         default: return;
     }
 
@@ -436,7 +442,7 @@ void GameScene::createPlantAtGrid(PlantType type, int row, int col) {
         case PlantType::SUNFLOWER: plantImage = "sunflower.png"; break;
         case PlantType::WALLNUT: plantImage = "nut.png"; break;
         case PlantType::FIRETREE: plantImage = "firetree.png"; break;
-        case PlantType::CHERRYBOMB: plantImage = "cheerybomb.png"; break;
+        case PlantType::CHERRYBOMB: plantImage = "cherrybomb.png"; break;
         default: return;
     }
 
@@ -461,6 +467,7 @@ void GameScene::createPlantAtGrid(PlantType type, int row, int col) {
     // 添加植物到场景
     this->addChild(plant, 10);
 }
+
 //初始化阳光系统
 void GameScene::initSunshineSystem() {
     auto visibleSize = Director::getInstance()->getVisibleSize();
@@ -652,6 +659,256 @@ void GameScene::updateSunshineCount(int delta) {
         auto sequence = Sequence::create(scaleUp, scaleDown, nullptr);
         sunshineLabel->runAction(sequence);
     }
+}
+// 初始化僵尸系统
+void GameScene::initZombieSystem() {
+    zombieSpawnTimer = 0.0f;
+    zombieSpawnInterval = 15.0f / speed; // 初始间隔15秒，受速度影响
+
+    // 初始化空僵尸数组
+    zombies.clear();
+}
+
+// 随机生成僵尸
+void GameScene::generateRandomZombie() {
+    // 生成随机数决定僵尸类型
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> dis(0.0, 1.0);
+
+    float randomValue = dis(gen);
+    ZombieType zombieType;
+
+    // 根据优先级决定僵尸类型
+    if (randomValue < 0.5f) { // 50% 普通僵尸
+        zombieType = ZombieType::NORMAL;
+    }
+    else if (randomValue < 0.8f) { // 30% 路障僵尸（累计80%）
+        zombieType = ZombieType::CONE;
+    }
+    else if (randomValue < 0.95f) { // 15% 铁桶僵尸（累计95%）
+        zombieType = ZombieType::BUCKET;
+    }
+    else { // 5% 旗帜僵尸（累计100%）
+        zombieType = ZombieType::FLAG;
+    }
+
+    // 随机选择行（0-4）
+    std::uniform_int_distribution<> rowDis(0, GRID_ROWS - 1);
+    int row = rowDis(gen);
+
+    // 创建僵尸
+    auto zombie = Zombie::createZombie(zombieType);
+    if (!zombie) return;
+
+    // 设置僵尸位置（从屏幕右侧外生成）
+    float startX = bgScreenEndX + 100;
+    Vec2 gridCenter = getGridCenter(row, 0);
+    float yPos = gridCenter.y;
+
+    zombie->setPosition(Vec2(startX, yPos));
+
+    // 设置僵尸大小（适应网格）
+    float zombieScale = cellHeight / zombie->getContentSize().height * 1.0f;
+    zombie->setScale(zombieScale);
+
+    // 添加僵尸到场景
+    this->addChild(zombie, 5); // 在植物下方显示
+
+    // 保存僵尸引用
+    zombies.pushBack(zombie);
+
+    // 如果是旗帜僵尸，增加移动速度
+    if (zombieType == ZombieType::FLAG) {
+        // 旗帜僵尸移动速度略快
+        zombie->setSpeed(zombie->getSpeed() * 1.2f);
+    }
+
+    // 添加生成动画
+    zombie->setOpacity(0);
+    auto fadeIn = FadeIn::create(0.5f);
+    zombie->runAction(fadeIn);
+}
+
+// 更新僵尸状态（每帧调用）
+void GameScene::updateZombies(float dt) {
+    // 更新僵尸生成计时器
+    zombieSpawnTimer += dt;
+
+    // 检查是否需要生成僵尸
+    if (zombieSpawnTimer >= zombieSpawnInterval) {
+        generateRandomZombie();
+        zombieSpawnTimer = 0.0f;
+
+        // 逐渐减少生成间隔，增加难度（但不会小于5秒）
+        zombieSpawnInterval = std::max(5.0f / speed, zombieSpawnInterval - 0.5f);
+    }
+
+    // 更新所有僵尸状态
+    for (auto& zombie : zombies) {
+        if (zombie) {
+            zombie->update(dt * speed); // 乘以速度因子
+
+            // 检查僵尸是否到达房子（屏幕左侧）
+            if (zombie->getPositionX() < bgScreenStartX - 50) {
+                // 僵尸到达房子，游戏结束
+                gameOver();
+                break;
+            }
+        }
+    }
+
+    // 检查植物和僵尸的碰撞
+    checkPlantZombieCollision();
+
+    // 移除死亡的僵尸
+    removeDeadZombies();
+}
+
+// 检查植物和僵尸的碰撞
+void GameScene::checkPlantZombieCollision() {
+    // 遍历所有网格检查是否有植物
+    for (int row = 0; row < GRID_ROWS; row++) {
+        for (int col = 0; col < GRID_COLS; col++) {
+            auto plant = gridPlants[row][col];
+            if (!plant) continue;
+
+            // 获取植物位置和大小
+            Vec2 plantPos = plant->getPosition();
+            float plantWidth = plant->getContentSize().width * plant->getScale() * 0.5f;
+            float plantHeight = plant->getContentSize().height * plant->getScale() * 0.5f;
+
+            Rect plantRect = Rect(
+                plantPos.x - plantWidth,
+                plantPos.y - plantHeight,
+                plantWidth * 2,
+                plantHeight * 2
+            );
+
+            // 检查每个僵尸是否与植物碰撞
+            for (auto& zombie : zombies) {
+                if (!zombie || zombie->getHP() <= 0) continue;
+
+                // 获取僵尸位置和大小
+                Vec2 zombiePos = zombie->getPosition();
+                float zombieWidth = zombie->getContentSize().width * zombie->getScale() * 0.3f;
+                float zombieHeight = zombie->getContentSize().height * zombie->getScale() * 0.3f;
+
+                Rect zombieRect = Rect(
+                    zombiePos.x - zombieWidth,
+                    zombiePos.y - zombieHeight,
+                    zombieWidth * 2,
+                    zombieHeight * 2
+                );
+
+                // 检查碰撞
+                if (plantRect.intersectsRect(zombieRect)) {
+                    // 僵尸攻击植物
+                    // 这里可以添加植物的生命值减少逻辑
+                    // 暂时先让植物消失（后续可以添加植物生命值）
+                    plant->removeFromParent();
+                    gridPlants[row][col] = nullptr;
+
+                    // 一个僵尸一次只攻击一个植物
+                    break;
+                }
+            }
+        }
+    }
+}
+
+// 移除死亡的僵尸
+void GameScene::removeDeadZombies() {
+    Vector<Zombie*> zombiesToRemove;
+
+    for (auto& zombie : zombies) {
+        if (zombie && zombie->getHP() <= 0) {
+            zombiesToRemove.pushBack(zombie);
+
+            // 添加死亡动画
+            auto fadeOut = FadeOut::create(0.5f);
+            auto remove = RemoveSelf::create();
+            auto sequence = Sequence::create(fadeOut, remove, nullptr);
+            zombie->runAction(sequence);
+        }
+    }
+
+    // 从数组中移除
+    for (auto& zombie : zombiesToRemove) {
+        zombies.eraseObject(zombie);
+    }
+}
+
+// 游戏结束函数
+void GameScene::gameOver() {
+    // 暂停游戏
+    Director::getInstance()->pause();
+
+    // 显示游戏结束画面
+    auto visibleSize = Director::getInstance()->getVisibleSize();
+
+    // 创建半透明背景
+    auto gameOverLayer = LayerColor::create(Color4B(0, 0, 0, 180), visibleSize.width, visibleSize.height);
+    gameOverLayer->setPosition(Vec2::ZERO);
+    this->addChild(gameOverLayer, 100);
+
+    // 游戏结束文字
+    auto gameOverLabel = Label::createWithSystemFont("游戏结束", "Arial", 72);
+    gameOverLabel->setPosition(Vec2(visibleSize.width / 2, visibleSize.height / 2 + 100));
+    gameOverLabel->setColor(Color3B::RED);
+    gameOverLayer->addChild(gameOverLabel);
+
+    // 重新开始按钮
+    auto restartButton = MenuItemImage::create(
+        "OptionsButton.png",
+        "OptionsButton.png",
+        [this](Ref* sender) {
+            Director::getInstance()->resume();
+            this->restartGame();
+        }
+    );
+
+    if (restartButton) {
+        auto restartLabel = Label::createWithSystemFont("重新开始", "Arial", 28);
+        restartLabel->setPosition(Vec2(
+            restartButton->getContentSize().width / 2,
+            restartButton->getContentSize().height / 2
+        ));
+        restartLabel->setColor(Color3B::WHITE);
+        restartButton->addChild(restartLabel, 1);
+    }
+    restartButton->setPosition(Vec2(visibleSize.width / 2, visibleSize.height / 2));
+
+    // 退出按钮
+    auto exitButton = MenuItemImage::create(
+        "OptionsButton.png",
+        "OptionsButton.png",
+        [this](Ref* sender) {
+            Director::getInstance()->resume();
+            this->exitToMainMenu();
+        }
+    );
+
+    if (exitButton) {
+        auto exitLabel = Label::createWithSystemFont("退出游戏", "Arial", 28);
+        exitLabel->setPosition(Vec2(
+            exitButton->getContentSize().width / 2,
+            exitButton->getContentSize().height / 2
+        ));
+        exitLabel->setColor(Color3B::WHITE);
+        exitButton->addChild(exitLabel, 1);
+    }
+    exitButton->setPosition(Vec2(visibleSize.width / 2, visibleSize.height / 2 - 100));
+
+    auto menu = Menu::create(restartButton, exitButton, nullptr);
+    menu->setPosition(Vec2::ZERO);
+    gameOverLayer->addChild(menu);
+}
+
+// 重写update函数
+void GameScene::update(float dt) {
+    // 更新僵尸系统
+    updateZombies(dt);
 }
 // 创建暂停按钮
 void GameScene::createPauseButton() {

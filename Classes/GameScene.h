@@ -3,6 +3,7 @@
 
 #include "cocos2d.h"
 #include "Plant.h"
+#include "Zombie.h"
 USING_NS_CC;
 
 class GameScene : public cocos2d::Scene {
@@ -75,7 +76,7 @@ private:
     void changeGameSpeed();                    // 切换游戏速度
     void updateSpeedLabel();                   // 更新速度显示
 
-	// 植物种植相关函数
+	// 植物种植相关
     Sprite* selectedCard;                       // 当前选中的卡片
     Vector<Sprite*> plantCards;                 // 植物卡片容器
     PlantType selectedPlant;                    // 当前选中的植物类型
@@ -90,6 +91,20 @@ private:
     void hidePlantingPreview();                 // 隐藏种植预览
     bool canPlacePlant(int row, int col);       // 检查是否可以放置植物
     void createPlantAtGrid(PlantType type, int row, int col);    // 在网格创建植物
+    
+    // 僵尸相关
+    Vector<Zombie*> zombies;  // 存储所有僵尸
+    float zombieSpawnTimer;   // 僵尸生成计时器
+    float zombieSpawnInterval; // 僵尸生成间隔
+    void initZombieSystem();      // 初始化僵尸系统
+    void generateRandomZombie();  // 随机生成僵尸
+    void updateZombies(float dt); // 更新僵尸状态
+    void checkPlantZombieCollision(); // 检查植物和僵尸的碰撞
+    void removeDeadZombies();     // 移除死亡的僵尸
+    virtual void update(float dt) override; // 每帧更新
+
+    //游戏结束判定
+    void gameOver();
 };
 
 #endif 

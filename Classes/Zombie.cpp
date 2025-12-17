@@ -18,19 +18,19 @@ bool Zombie::initZombie(ZombieType type) {
 
     switch (type) {
         case ZombieType::NORMAL:
-            filename = "zombie.png"; // ÆÕÍ¨½©Ê¬ËØ²Ä
+            filename = "zombie.png"; // ÆÕÍ¨½©Ê¬
             hp = 200;
             break;
         case ZombieType::FLAG:
-            filename = "flagzombie.png"; // ÆìÖÄ½©Ê¬ËØ²Ä
+            filename = "flagzombie.png"; // ÆìÖÄ½©Ê¬
             hp = 200;
             break;
         case ZombieType::BUCKET:
-            filename = "ironzombie.png"; // ÌúÍ°½©Ê¬ËØ²Ä
+            filename = "ironzombie.png"; // ÌúÍ°½©Ê¬
             hp = 1300; // ÌúÍ°ÑªÁ¿¸ß
             break;
         case ZombieType::CONE:
-            filename = "roasbloakzombie.png"; // Õâ¸öÎÄ¼þÃû¿´ÆðÀ´ÊÇÂ·ÕÏ½©Ê¬
+            filename = "roasbloakzombie.png"; // Â·ÕÏ½©Ê¬
             hp = 560; // Â·ÕÏÑªÁ¿ÖÐµÈ
             break;
     }
@@ -41,6 +41,18 @@ bool Zombie::initZombie(ZombieType type) {
     m_speed = 10.0f; // ÒÆ¶¯ËÙ¶È
     this->scheduleUpdate();
     return true;
+}
+float Zombie::getSpeed() const { return m_speed; }
+void Zombie::setSpeed(float speed) { m_speed = speed; }
+void Zombie::takeDamage(int damage) {
+        m_hp -= damage;
+        if (m_hp < 0) m_hp = 0;
+
+        // ÊÜÉËÐ§¹û
+        auto tintRed = TintTo::create(0.1f, 255, 100, 100);
+        auto tintBack = TintTo::create(0.1f, 255, 255, 255);
+        auto sequence = Sequence::create(tintRed, tintBack, nullptr);
+        this->runAction(sequence);
 }
 
 void Zombie::update(float dt) {

@@ -1,8 +1,8 @@
 ﻿#ifndef __GAME_SCENE_H__
 #define __GAME_SCENE_H__
-
 #include "cocos2d.h"
-
+#include "Plant.h"
+#include "Zombie.h"
 USING_NS_CC;
 
 class GameScene : public cocos2d::Scene {
@@ -14,7 +14,7 @@ public:
 private:
     // 游戏背景元素
     cocos2d::Sprite* background = Sprite::create("fightbackground.jpg");
-    cocos2d::Sprite* shop= Sprite::create("shop.png");
+    cocos2d::Sprite* shop = Sprite::create("shop.png");
 
     // 背景图信息
     float scaledBgWidth;
@@ -25,8 +25,8 @@ private:
     float bgScreenEndY;
 
     // 网格系统
-    const int GRID_ROWS = 5;
-    const int GRID_COLS = 9;
+    static const int GRID_ROWS = 5;
+    static const int GRID_COLS = 9;
     float gridStartX;     // 草地网格起始X坐标
     float gridStartY;     // 草地网格起始Y坐标
     float gridWidth;      // 草地网格宽度
@@ -37,7 +37,7 @@ private:
     // 阳光系统相关
     cocos2d::Label* sunshineLabel;
     int sunshineCount;
-    cocos2d::Sprite* sunshineIcon; 
+    cocos2d::Sprite* sunshineIcon;
     cocos2d::Vector<cocos2d::Sprite*> sunshines;
 
     //菜单设置
@@ -74,6 +74,37 @@ private:
     void exitToMainMenu();                     // 返回主菜单
     void changeGameSpeed();                    // 切换游戏速度
     void updateSpeedLabel();                   // 更新速度显示
+
+    // 植物种植相关
+    Sprite* selectedCard;                       // 当前选中的卡片
+    Vector<Sprite*> plantCards;                 // 植物卡片容器
+    PlantType selectedPlant;                    // 当前选中的植物类型
+    Sprite* plantingPreview;                    // 种植预览精灵
+    Sprite* gridPlants[GRID_ROWS][GRID_COLS]; // 网格中的植物指针数组
+    void initPlantCards();                      // 初始化植物卡片
+    void createPlantCard(PlantType type, const Vec2& position, float cardScale); // 创建植物卡片
+    void selectPlantCard(Sprite* card, PlantType type);         // 选择植物卡片
+    void unselectPlantCard();                   // 取消选择植物卡片
+    void placePlant(int row, int col);          // 放置植物
+    void showPlantingPreview();                 // 显示种植预览
+    void hidePlantingPreview();                 // 隐藏种植预览
+    bool canPlacePlant(int row, int col);       // 检查是否可以放置植物
+    void createPlantAtGrid(PlantType type, int row, int col);    // 在网格创建植物
+
+    // 僵尸相关
+    Vector<Zombie*> zombies;  // 存储所有僵尸
+    float zombieSpawnTimer;   // 僵尸生成计时器
+    float zombieSpawnInterval; // 僵尸生成间隔
+    void initZombieSystem();      // 初始化僵尸系统
+    void generateRandomZombie();  // 随机生成僵尸
+    void updateZombies(float dt); // 更新僵尸状态
+    void checkPlantZombieCollision(); // 检查植物和僵尸的碰撞
+    void removeDeadZombies();     // 移除死亡的僵尸
+    virtual void update(float dt) override; // 每帧更新
+
+    //游戏结束判定(僵尸胜利)
+    void gameOver();
+    void showGameOverMenu(const cocos2d::Size& visibleSize, cocos2d::LayerColor* gameOverLayer);
 };
 
 #endif 

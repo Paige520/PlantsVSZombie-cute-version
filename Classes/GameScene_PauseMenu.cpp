@@ -179,7 +179,8 @@ void GameScene::showPauseMenu() {
 
     // 暂停所有动作
     this->pause();
-
+    //暂停音乐
+    pauseBackgroundMusic();
     // 暂停所有植物卡片的触摸事件
     for (auto& card : plantCards) {
         card->pause();
@@ -189,7 +190,17 @@ void GameScene::showPauseMenu() {
     for (auto& sunshine : sunshines) {
         sunshine->pause();
     }
+    // 暂停所有僵尸的动画
+    for (auto& zombie : zombies) {
+        zombie->pause();
+    }
 
+    // 暂停所有推车的动画
+    for (int row = 0; row < GRID_ROWS; row++) {
+        if (lawnMowers[row]) {
+            lawnMowers[row]->pause();
+        }
+    }
     // 显示暂停菜单
     pauseLayer->setVisible(true);
 
@@ -205,18 +216,33 @@ void GameScene::hidePauseMenu() {
     for (auto& card : plantCards) {
         card->resume();
     }
-
     // 恢复所有阳光的动画
     for (auto& sunshine : sunshines) {
         sunshine->resume();
     }
 
-    // 恢复游戏
+    // 恢复所有僵尸的动画
+    for (auto& zombie : zombies) {
+        zombie->resume();
+    }
+
+    // 恢复所有推车的动画
+    for (int row = 0; row < GRID_ROWS; row++) {
+        if (lawnMowers[row]) {
+            lawnMowers[row]->resume();
+        }
+    }
+
+    // 恢复背景音乐
+    resumeBackgroundMusic();
+  
     this->resume();
     Director::getInstance()->resume();
 }
 // 重新开始游戏
 void GameScene::restartGame() {
+    // 停止当前音乐
+    stopBackgroundMusic();
     // 恢复游戏（确保在场景切换前恢复）
     Director::getInstance()->resume();
     // 重新加载当前场景
@@ -226,6 +252,8 @@ void GameScene::restartGame() {
 }
 // 退出到主菜单
 void GameScene::exitToMainMenu() {
+    // 停止当前音乐
+    stopBackgroundMusic();
     // 恢复游戏（确保在场景切换前恢复）
     Director::getInstance()->resume();
 

@@ -183,7 +183,8 @@ void GameScene::gameOver() {
     // 暂停游戏
     this->pause(); // 暂停场景中的动作
     this->unscheduleAllCallbacks(); // 停止所有调度器
-
+    // 暂停背景音乐
+    pauseBackgroundMusic();
     // 显示游戏结束画面
     auto visibleSize = Director::getInstance()->getVisibleSize();
 

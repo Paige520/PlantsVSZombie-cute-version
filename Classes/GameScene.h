@@ -3,6 +3,7 @@
 #include "cocos2d.h"
 #include "Plant.h"
 #include "Zombie.h"
+#include "audio/include/AudioEngine.h"
 USING_NS_CC;
 
 class GameScene : public cocos2d::Scene {
@@ -101,10 +102,37 @@ private:
     void checkPlantZombieCollision(); // 检查植物和僵尸的碰撞
     void removeDeadZombies();     // 移除死亡的僵尸
     virtual void update(float dt) override; // 每帧更新
-
     //游戏结束判定(僵尸胜利)
     void gameOver();
     void showGameOverMenu(const cocos2d::Size& visibleSize, cocos2d::LayerColor* gameOverLayer);
+
+    // 推车系统
+    cocos2d::Sprite* lawnMowers[GRID_ROWS];      // 每行的推车精灵
+    bool lawnMowerActive[GRID_ROWS];             // 推车是否激活
+    // 推车系统方法
+    void initLawnMowerSystem();
+    void createLawnMowerForRow(int row);
+    void activateLawnMower(int row);
+    void clearZombiesInRow(int row);
+    int getZombieRow(Zombie* zombie);
+    void checkLawnMowerCollision();
+    void removeLawnMower(int row);
+    void updateLawnMowers(float dt);
+    void regenerateLawnMower(int row);
+    void resetLawnMowers();
+
+    // 音乐控制相关
+    cocos2d::experimental::AudioProfile* audioProfile;
+    bool musicEnabled;
+    float musicVolume;
+    // 音乐控制方法
+    void initAudioSystem();
+    void playBackgroundMusic();
+    void pauseBackgroundMusic();
+    void resumeBackgroundMusic();
+    void stopBackgroundMusic();
+    void setMusicVolume(float volume);
+    bool isMusicPlaying();
 };
 
 #endif 

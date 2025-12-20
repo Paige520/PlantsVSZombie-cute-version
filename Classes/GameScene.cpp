@@ -41,7 +41,8 @@ bool GameScene::init() {
     createPauseButton();   // 创建暂停按钮
     createPauseMenu();     // 创建暂停菜单
     initZombieSystem();    // 初始化僵尸系统
-    initLawnMowerSystem();    // 初始化推车系统
+    initLawnMowerSystem(); // 初始化推车系统
+    initAudioSystem();     // 初始化音频系统
 
     // 添加触摸监听器用于种植
     auto touchListener = EventListenerTouchOneByOne::create();

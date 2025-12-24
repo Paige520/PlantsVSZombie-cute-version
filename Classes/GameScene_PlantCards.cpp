@@ -34,7 +34,7 @@ void GameScene::initPlantCards() {
 //创建卡片
 void GameScene::createPlantCard(PlantType type, const Vec2& position, float cardScale) {
     // 创建卡片背景
-    auto card = Sprite::create("card.png");
+    auto card = Sprite::create("Card.png");
     if (!card) return;
 
     // 计算合适的卡片大小
@@ -82,6 +82,19 @@ void GameScene::createPlantCard(PlantType type, const Vec2& position, float card
         Rect cardRect = card->getBoundingBox();
 
         if (cardRect.containsPoint(touchLocation)) {
+            // 检查卡片是否在冷却中
+            if (cardCooldownTimers[type] > 0.0f) {
+                // 冷却中，提示效果
+                auto shake = Sequence::create(
+                    MoveBy::create(0.05f, Vec2(5, 0)),
+                    MoveBy::create(0.05f, Vec2(-10, 0)),
+                    MoveBy::create(0.05f, Vec2(5, 0)),
+                    nullptr
+                );
+                card->runAction(shake);
+                return false;
+            }
+            
             // 检查阳光是否足够
             if (sunshineCount >= price) {
                 this->selectPlantCard(card, type);
@@ -112,6 +125,52 @@ void GameScene::createPlantCard(PlantType type, const Vec2& position, float card
         };
 
     _eventDispatcher->addEventListenerWithSceneGraphPriority(listener, card);
+
+    // 创建冷却遮罩
+    auto cooldownMask = Sprite::create("Card.png");
+    if (cooldownMask) {
+        cooldownMask->setScale(cardScale);
+        cooldownMask->setPosition(position);
+        cooldownMask->setColor(Color3B::GRAY);
+        cooldownMask->setOpacity(150);
+        cooldownMask->setVisible(false); // 默认隐藏
+        this->addChild(cooldownMask, 11); // 遮罩在卡片上方
+        cardCooldownMasks.pushBack(cooldownMask);
+    }
+
+    // 设置植物类型的冷却时间
+    float cooldownTime = 0.0f;
+    switch (type) {
+    case PlantType::PEASHOOTER:
+        cooldownTime = 7.5f; // 7.5秒冷却
+        break;
+    case PlantType::SNOWPEA:
+        cooldownTime = 7.5f;
+        break;
+    case PlantType::SUNFLOWER:
+        cooldownTime = 7.5f;
+        break;
+    case PlantType::WALLNUT:
+        cooldownTime = 30.0f; // 坚果冷却时间较长
+        break;
+    case PlantType::FIRETREE:
+        cooldownTime = 7.5f;
+        break;
+    case PlantType::CHERRYBOMB:
+        cooldownTime = 30.0f; // 樱桃炸弹冷却时间较长
+        break;
+    default:
+        cooldownTime = 0.0f;
+        break;
+    }
+    cardCooldowns[type] = cooldownTime;
+    cardCooldownTimers[type] = 0.0f;
+    
+    // 建立植物类型到卡片和冷却遮罩的映射
+    plantTypeToCardMap[type] = card;
+    if (cooldownMask) {
+        plantTypeToCooldownMaskMap[type] = cooldownMask;
+    }
 
     // 保存卡片引用
     plantCards.pushBack(card);

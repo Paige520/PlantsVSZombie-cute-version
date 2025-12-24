@@ -77,23 +77,46 @@ void GameScene::createSunshine(const Vec2& position) {
 
     float sunshineScale = cellWidth / sunshine->getContentSize().width;
     sunshine->setPosition(position);
-    sunshine->setScale(sunshineScale);
     sunshine->setTag(100); // 设置标签，用于标识阳光
 
-    // 添加阳光闪烁效果
+    // 添加阳光生成的平滑入场动画
+    // 1. 初始状态：缩小、透明
+    sunshine->setScale(0.1f);
+    sunshine->setOpacity(0);
+    
+    // 2. 入场动画：放大到正常大小、淡入、旋转
+    auto scaleTo = ScaleTo::create(0.5f, sunshineScale);
+    auto fadeIn = FadeIn::create(0.5f);
+    auto rotate = RotateTo::create(0.5f, 360);
+    
+    // 3. 播放入场动画
+    auto spawn = Spawn::create(scaleTo, fadeIn, rotate, nullptr);
+    sunshine->runAction(spawn);
+    
+    // 4. 入场后添加阳光闪烁效果
     auto fadeOut = FadeTo::create(0.5f, 200);
-    auto fadeIn = FadeTo::create(0.5f, 255);
-    auto blink = Sequence::create(fadeOut, fadeIn, nullptr);
-    sunshine->runAction(RepeatForever::create(blink));
+    auto fadeInLoop = FadeTo::create(0.5f, 255);
+    auto blink = Sequence::create(fadeOut, fadeInLoop, nullptr);
+    auto blinkForever = RepeatForever::create(blink);
+    sunshine->runAction(Sequence::create(DelayTime::create(0.5f), blinkForever, nullptr));
 
-    // 添加下落动画
-    auto visibleSize = Director::getInstance()->getVisibleSize();
-    float targetY = gridStartY;
-    auto moveDown = MoveBy::create(5.0f / speed, Vec2(0, -(position.y - targetY)));
-    auto bounce = EaseBounceOut::create(moveDown->clone());
+    // 添加下落动画：优化阳光掉落效果，确保垂直下落
+    // 获取阳光生成位置对应的格子坐标
+    std::pair<int, int> gridPos = getGridFromPosition(position);
+    int row = gridPos.first;
+    int col = gridPos.second;
+    
+    // 计算该格子的中心位置作为下落目标（确保垂直下落）
+    Vec2 targetPos = getGridCenter(row, col);
+    // 确保阳光垂直下落，X坐标保持不变
+    targetPos.x = position.x;
+    
+    // 优化下落动画，使其更加流畅自然
+    auto moveDown = MoveTo::create(4.0f / speed, targetPos);
+    auto easeInOut = EaseInOut::create(moveDown, 2.0f); // 使用EaseInOut使动画更自然
 
     sunshine->runAction(Sequence::create(
-        bounce,
+        easeInOut,
         CallFunc::create([sunshine]() {
             // 落到草坪后，轻微晃动
             auto shake = Sequence::create(

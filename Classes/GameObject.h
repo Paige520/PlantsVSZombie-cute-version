@@ -10,8 +10,8 @@ public:
     virtual bool init(const std::string& filename);
 
     // 属性操作
-    void setHp(int hp) { m_hp = hp; }
-    int getHp() const { return m_hp; }
+    virtual void setHp(int hp) { m_hp = hp; }
+    virtual int getHp() const { return m_hp; }
 
 protected:
     int m_hp; // 生命值

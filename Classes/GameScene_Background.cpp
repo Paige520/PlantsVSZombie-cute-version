@@ -38,6 +38,13 @@ void GameScene::calculateBackgroundInfo() {
 }
 //创建商店
 void GameScene::initShop() {
+    if (!shop) {
+        shop = Sprite::create("Shop.png");
+        if (!shop) {
+            CCLOG("ERROR: Failed to load Shop.png");
+            return;
+        }
+    }
 
     auto visibleSize = Director::getInstance()->getVisibleSize();
     //获取商店原尺寸

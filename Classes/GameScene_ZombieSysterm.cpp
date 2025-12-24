@@ -144,11 +144,15 @@ void GameScene::checkPlantZombieCollision() {
 
                 // 检查碰撞
                 if (plantRect.intersectsRect(zombieRect)) {
-                    // 僵尸攻击植物
-                    // 这里可以添加植物的生命值减少逻辑
-                    // 暂时先让植物消失（后续可以添加植物生命值）
-                    plant->removeFromParent();
-                    gridPlants[row][col] = nullptr;
+                    // 将Sprite指针转换为Plant指针
+                    Plant* plantObj = dynamic_cast<Plant*>(plant);
+                    if (plantObj) {
+                        // 设置僵尸的目标植物
+                        zombie->setTarget(plantObj);
+                        
+                        // 让僵尸进入攻击状态，触发啃咬动画
+                        zombie->setState(ZombieState::ATTACKING);
+                    }
 
                     // 一个僵尸一次只攻击一个植物
                     break;
@@ -178,6 +182,86 @@ void GameScene::removeDeadZombies() {
         zombies.eraseObject(zombie);
     }
 }
+// 处理樱桃炸弹爆炸伤害
+void GameScene::handleCherryBombExplosion(int row, int col) {
+    // 爆炸范围：3x3网格
+    const int explosionRange = 1;
+    // 爆炸伤害：确保能消灭铁桶僵尸（铁桶僵尸生命值是1300）
+    const int explosionDamage = 2000;
+    
+    // 创建爆炸视觉特效
+    Vec2 explosionPos = getGridCenter(row, col);
+    
+    // 简单的爆炸动画：缩放和颜色变化
+    auto explosionSprite = Sprite::create("cherrybomb.png");
+    if (explosionSprite) {
+        explosionSprite->setPosition(explosionPos);
+        explosionSprite->setScale(0.1f);
+        this->addChild(explosionSprite, 50);
+        
+        // 爆炸动画
+        auto scaleUp = ScaleTo::create(0.3f, 3.0f);
+        auto fadeOut = FadeOut::create(0.3f);
+        auto remove = RemoveSelf::create();
+        auto sequence = Sequence::create(Spawn::create(scaleUp, fadeOut, nullptr), remove, nullptr);
+        explosionSprite->runAction(sequence);
+        
+        // 添加红色闪光效果
+        auto flash = Sprite::create("white_pixel.png");
+        if (flash) {
+            flash->setPosition(explosionPos);
+            flash->setScale(0.1f);
+            flash->setColor(Color3B::RED);
+            flash->setOpacity(150);
+            this->addChild(flash, 50);
+            
+            auto flashScale = ScaleTo::create(0.2f, 4.0f);
+            auto flashFade = FadeOut::create(0.2f);
+            auto flashRemove = RemoveSelf::create();
+            auto flashSequence = Sequence::create(Spawn::create(flashScale, flashFade, nullptr), flashRemove, nullptr);
+            flash->runAction(flashSequence);
+        }
+    }
+    
+    // 播放爆炸音效
+    // AudioEngine::play2d("explosion.mp3", false, 0.5f);
+    
+    // 检查爆炸范围内的所有僵尸
+    for (int r = row - explosionRange; r <= row + explosionRange; r++) {
+        for (int c = col - explosionRange; c <= col + explosionRange; c++) {
+            // 检查网格是否有效
+            if (r < 0 || r >= GRID_ROWS || c < 0 || c >= GRID_COLS) {
+                continue;
+            }
+            
+            // 计算当前网格的中心位置
+            Vec2 gridCenter = getGridCenter(r, c);
+            
+            // 检查每个僵尸是否在爆炸范围内
+            for (auto& zombie : zombies) {
+                if (!zombie || zombie->getHP() <= 0) {
+                    continue;
+                }
+                
+                Vec2 zombiePos = zombie->getPosition();
+                // 计算僵尸与爆炸中心的距离
+                float distance = zombiePos.getDistance(gridCenter);
+                
+                // 如果僵尸在爆炸范围内，造成伤害
+                if (distance <= gridWidth) { // gridWidth作为爆炸半径
+                    zombie->takeDamage(explosionDamage);
+                    
+                    // 添加伤害效果
+                    auto tintRed = TintTo::create(0.1f, 255, 0, 0);
+                    auto tintBack = TintTo::create(0.1f, 255, 255, 255);
+                    auto sequence = Sequence::create(tintRed, tintBack, nullptr);
+                    zombie->runAction(sequence);
+                }
+            }
+        }
+    }
+}
+
 // 游戏结束函数
 void GameScene::gameOver() {
     // 暂停游戏
@@ -313,9 +397,200 @@ void GameScene::showGameOverMenu(const cocos2d::Size& visibleSize, cocos2d::Laye
     menu->setPosition(Vec2(visibleSize.width / 2, visibleSize.height / 2));
     menu->setTag(102); // 设置tag以便查找
     gameOverLayer->addChild(menu);
-}// 重写update函数
-void GameScene::update(float dt) {
-    // 更新僵尸系统
-    updateZombies(dt);
-    updateLawnMowers(dt);
+}
+
+// 更新子弹系统
+void GameScene::updateBullets(float dt) {
+    // 更新所有子弹状态
+    for (auto& bullet : bullets) {
+        if (bullet) {
+            // 使用子弹自身的速度属性，避免使用未定义的全局speed变量
+            bullet->update(dt);
+        }
+    }
+
+    // 检查子弹与火炬树桩的碰撞（火焰效果转换）
+    checkBulletFireTreeCollision();
+    
+    // 检查子弹与僵尸的碰撞
+    checkBulletZombieCollision();
+
+    // 移除死亡的子弹
+    removeDeadBullets();
+}
+
+// 检查子弹与僵尸的碰撞
+void GameScene::checkBulletZombieCollision() {
+    // 遍历所有子弹
+    for (auto& bullet : bullets) {
+        if (!bullet) continue;
+
+        // 获取子弹位置和大小
+        Vec2 bulletPos = bullet->getPosition();
+        float bulletWidth = bullet->getContentSize().width * bullet->getScale() * 0.5f;
+        float bulletHeight = bullet->getContentSize().height * bullet->getScale() * 0.5f;
+
+        Rect bulletRect = Rect(
+            bulletPos.x - bulletWidth,
+            bulletPos.y - bulletHeight,
+            bulletWidth * 2,
+            bulletHeight * 2
+        );
+
+        // 遍历所有僵尸
+        for (auto& zombie : zombies) {
+            if (!zombie || zombie->getHP() <= 0) continue;
+
+            // 获取僵尸位置和大小
+            Vec2 zombiePos = zombie->getPosition();
+            float zombieWidth = zombie->getContentSize().width * zombie->getScale() * 0.5f;
+            float zombieHeight = zombie->getContentSize().height * zombie->getScale() * 0.5f;
+
+            Rect zombieRect = Rect(
+                zombiePos.x - zombieWidth,
+                zombiePos.y - zombieHeight,
+                zombieWidth * 2,
+                zombieHeight * 2
+            );
+
+            // 检查碰撞
+            if (bulletRect.intersectsRect(zombieRect)) {
+                // 子弹击中僵尸，根据子弹类型处理
+                switch (bullet->getBulletType()) {
+                    case BulletType::NORMAL:
+                        // 普通子弹，直接减少生命值
+                        zombie->takeDamage(bullet->getDamage());
+                        break;
+                    case BulletType::ICE:
+                        // 冰冻子弹，减少生命值并添加更显著的减速效果
+                        zombie->takeDamage(bullet->getDamage());
+                        zombie->applySlow(0.3f, 5.0f); // 70%减速，持续5秒
+                        break;
+                    case BulletType::FIRE:
+                        // 火焰子弹，造成额外伤害
+                        zombie->takeDamage(bullet->getDamage() * 2); // 假设火焰子弹伤害翻倍
+                        break;
+                    default:
+                        break;
+                }
+
+                // 添加击中效果 - 确保资源加载安全
+            std::string hitEffectFile = "bullet_hit.png";
+            auto hitEffect = Sprite::create(hitEffectFile);
+            if (hitEffect) {
+                hitEffect->setPosition(zombiePos);
+                hitEffect->setScale(0.5f);
+                this->addChild(hitEffect, 10);
+
+                // 添加消失动画
+                auto fadeOut = FadeOut::create(0.3f);
+                auto remove = RemoveSelf::create();
+                auto sequence = Sequence::create(fadeOut, remove, nullptr);
+                hitEffect->runAction(sequence);
+            } else {
+                // 如果资源加载失败，记录日志但不崩溃
+                CCLOG("Warning: Failed to load bullet hit effect texture: %s", hitEffectFile.c_str());
+            }
+
+                // 标记子弹为死亡，由removeDeadBullets函数统一移除
+                bullet->setIsDead(true);
+                break; // 子弹只能击中一个僵尸
+            }
+        }
+
+        // 检查子弹是否飞出屏幕右侧 - 标记为死亡，由removeDeadBullets函数统一移除
+        if (bulletPos.x > bgScreenEndX + 100 && !bullet->getIsDead()) {
+            bullet->setIsDead(true);
+        }
+    }
+}
+
+// 添加子弹到容器
+void GameScene::addBullet(Bullet* bullet) {
+    if (bullet) {
+        bullets.pushBack(bullet);
+    }
+}
+
+// 检查子弹与火炬树桩的碰撞（火焰效果转换）
+void GameScene::checkBulletFireTreeCollision() {
+    // 遍历所有子弹
+    for (int i = 0; i < this->bullets.size(); ++i) {
+        Bullet* bullet = this->bullets.at(i);
+        if (!bullet) continue;
+        
+        // 只处理非火焰子弹
+        if (bullet->getBulletType() == BulletType::FIRE) continue;
+        
+        // 获取子弹位置和大小
+        Vec2 bulletPos = bullet->getPosition();
+        float bulletWidth = bullet->getContentSize().width * bullet->getScale() * 0.5f;
+        float bulletHeight = bullet->getContentSize().height * bullet->getScale() * 0.5f;
+
+        Rect bulletRect = Rect(
+            bulletPos.x - bulletWidth,
+            bulletPos.y - bulletHeight,
+            bulletWidth * 2,
+            bulletHeight * 2
+        );
+        
+        // 遍历所有网格检查是否有火炬树桩
+        for (int row = 0; row < GRID_ROWS; row++) {
+            for (int col = 0; col < GRID_COLS; col++) {
+                Plant* plant = this->gridPlants[row][col];
+                if (!plant) continue;
+                
+                // 检查是否是火炬树桩
+                if (plant->getType() != PlantType::FIRETREE) continue;
+                
+                // 获取植物位置和大小
+                Vec2 plantPos = plant->getPosition();
+                float plantWidth = plant->getContentSize().width * plant->getScale() * 0.5f;
+                float plantHeight = plant->getContentSize().height * plant->getScale() * 0.5f;
+
+                Rect plantRect = Rect(
+                    plantPos.x - plantWidth,
+                    plantPos.y - plantHeight,
+                    plantWidth * 2,
+                    plantHeight * 2
+                );
+                
+                // 检查碰撞
+                if (bulletRect.intersectsRect(plantRect)) {
+                    // 转换为火焰子弹
+                    bullet->setBulletType(BulletType::FIRE);
+                    bullet->switchToFireBullet();
+                    
+                    // 一个子弹只能被转换一次
+                    break;
+                }
+            }
+        }
+    }
+}
+
+// 移除死亡的子弹
+void GameScene::removeDeadBullets() {
+    Vector<Bullet*> bulletsToRemove;
+
+    // 先找出所有需要移除的子弹
+    for (auto& bullet : bullets) {
+        if (bullet && bullet->getIsDead()) {
+            bulletsToRemove.pushBack(bullet);
+        }
+    }
+
+    // 对需要移除的子弹执行动画并从容器中移除
+    for (auto& bullet : bulletsToRemove) {
+        if (bullet && bullet->getParent()) { // 确保子弹仍在场景中
+            // 先执行动画，动画完成后再从容器中移除
+            auto fadeOut = FadeOut::create(0.2f);
+            auto remove = RemoveSelf::create();
+            auto sequence = Sequence::create(fadeOut, remove, nullptr);
+            bullet->runAction(sequence);
+            
+            // 从容器中移除
+            bullets.eraseObject(bullet);
+        }
+    }
 }

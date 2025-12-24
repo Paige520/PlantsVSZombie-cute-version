@@ -23,6 +23,18 @@ void GameScene::placePlant(int row, int col) {
     // 创建植物
     createPlantAtGrid(selectedPlant, row, col);
 
+    // 启动冷却计时器
+    float cooldownTime = cardCooldowns[selectedPlant];
+    if (cooldownTime > 0.0f) {
+        cardCooldownTimers[selectedPlant] = cooldownTime;
+        
+        // 显示冷却遮罩
+        auto maskIter = plantTypeToCooldownMaskMap.find(selectedPlant);
+        if (maskIter != plantTypeToCooldownMaskMap.end()) {
+            maskIter->second->setVisible(true);
+        }
+    }
+
     // 取消选择
     unselectPlantCard();
 }
@@ -48,23 +60,27 @@ bool GameScene::canPlacePlant(int row, int col) {
 }
 // 在网格创建植物
 void GameScene::createPlantAtGrid(PlantType type, int row, int col) {
-    std::string plantImage;
-    switch (type) {
-    case PlantType::PEASHOOTER: plantImage = "pea-shooter.png"; break;
-    case PlantType::SNOWPEA: plantImage = "ice-pea-shooter.png"; break;
-    case PlantType::SUNFLOWER: plantImage = "sunflower.png"; break;
-    case PlantType::WALLNUT: plantImage = "nut.png"; break;
-    case PlantType::FIRETREE: plantImage = "firetree.png"; break;
-    case PlantType::CHERRYBOMB: plantImage = "cherrybomb.png"; break;
-    default: return;
+    CCLOG("INFO: createPlantAtGrid called with type %d, row %d, col %d", (int)type, row, col);
+    
+    // 使用Plant::createPlant()方法创建植物实例
+    auto plant = Plant::createPlant(type);
+    if (!plant) {
+        CCLOG("ERROR: Failed to create plant instance for type %d", (int)type);
+        return;
     }
-
-    auto plant = Sprite::create(plantImage);
-    if (!plant) return;
+    
+    CCLOG("INFO: Plant instance created successfully");
 
     // 设置植物位置和大小
     Vec2 gridCenter = getGridCenter(row, col);
-    float plantScale = cellWidth / plant->getContentSize().width * 1.2f;
+    CCLOG("INFO: Grid center at (%.2f, %.2f)", gridCenter.x, gridCenter.y);
+    
+    Size plantSize = plant->getContentSize();
+    CCLOG("INFO: Plant content size (%.2f, %.2f)", plantSize.width, plantSize.height);
+    
+    float plantScale = cellWidth / plantSize.height * 1.2f;
+    CCLOG("INFO: Plant scale factor %.2f", plantScale);
+    
     plant->setScale(plantScale);
     plant->setPosition(gridCenter);
 
@@ -76,7 +92,26 @@ void GameScene::createPlantAtGrid(PlantType type, int row, int col) {
 
     // 保存植物到网格
     gridPlants[row][col] = plant;
+    CCLOG("INFO: Plant saved to grid at row %d, col %d", row, col);
 
     // 添加植物到场景
     this->addChild(plant, 10);
+    CCLOG("INFO: Plant added to scene");
+
+    // 设置植物的场景引用，以便植物可以与场景交互（如产生阳光、发射子弹等）
+    plant->setScene(this);
+    
+    // 设置植物的网格位置
+    plant->setGridPosition(row, col);
+    
+    CCLOG("INFO: Plant scene reference set");
+}
+
+// 从网格移除植物
+void GameScene::removePlantFromGrid(int row, int col) {
+    if (isGridPositionValid(row, col)) {
+        // 从网格中移除植物指针
+        gridPlants[row][col] = nullptr;
+        CCLOG("INFO: Plant removed from grid at row %d, col %d", row, col);
+    }
 }

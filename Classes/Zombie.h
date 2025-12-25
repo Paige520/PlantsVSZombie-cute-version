@@ -1,22 +1,23 @@
-#ifndef __ZOMBIE_H__
+ï»¿#ifndef __ZOMBIE_H__
 #define __ZOMBIE_H__
 
 #include "GameObject.h"
 #include "cocos2d.h"
 
-// ½©Ê¬×´Ì¬Ã¶¾Ù
+class GameScene;
+// åƒµå°¸çŠ¶æ€æšä¸¾
 enum class ZombieState {
-    MOVING,     // ÒÆ¶¯×´Ì¬
-    ATTACKING,  // ¹¥»÷×´Ì¬
-    DYING,      // ËÀÍö×´Ì¬
-    DEAD        // ÒÑËÀÍö
+    MOVING,     // ç§»åŠ¨çŠ¶æ€
+    ATTACKING,  // æ”»å‡»çŠ¶æ€
+    DYING,      // æ­»äº¡çŠ¶æ€
+    DEAD        // å·²æ­»äº¡
 };
 
 enum class ZombieType {
-    NORMAL,     // ÆÕÍ¨½©Ê¬
-    FLAG,       // ÆìÖÄ½©Ê¬
-    BUCKET,     // ÌúÍ°½©Ê¬
-    CONE        // Â·ÕÏ½©Ê¬
+    NORMAL,     // æ™®é€šåƒµå°¸
+    FLAG,       // æ——å¸œåƒµå°¸
+    BUCKET,     // é“æ¡¶åƒµå°¸
+    CONE        // è·¯éšœåƒµå°¸
 };
 
 class Plant;
@@ -24,76 +25,82 @@ class Plant;
 class Zombie : public GameObject {
 public:
     static Zombie* createZombie(ZombieType type);
-    virtual void update(float dt) override; // Ã¿Ö¡¸üĞÂ
+    virtual void update(float dt) override; // æ¯å¸§æ›´æ–°
 
-    // »ñÈ¡ºÍÉèÖÃÉúÃüÖµ
+    // è·å–å’Œè®¾ç½®ç”Ÿå‘½å€¼
     int getHP() const { return getHp(); }
     void setHP(int hp) { setHp(hp); }
 
-    // »ñÈ¡ºÍÉèÖÃËÙ¶È
+    // è·å–å’Œè®¾ç½®é€Ÿåº¦
     float getSpeed() const;
     void setSpeed(float speed);
     float getBaseSpeed() const { return m_baseSpeed; }
-    
-    // ¼õËÙÏà¹Ø·½·¨
+
+    // å‡é€Ÿç›¸å…³æ–¹æ³•
     void applySlow(float slowFactor, float duration);
     void updateSlow(float dt);
     bool isSlowed() const { return m_slowDuration > 0.0f; }
 
-    // »ñÈ¡ºÍÉèÖÃ½©Ê¬ÀàĞÍ
+    // è·å–å’Œè®¾ç½®åƒµå°¸ç±»å‹
     ZombieType getType() const { return m_type; }
     void setType(ZombieType type) { m_type = type; }
 
-    // »ñÈ¡ºÍÉèÖÃ½©Ê¬×´Ì¬
+    // è·å–å’Œè®¾ç½®åƒµå°¸çŠ¶æ€
     ZombieState getState() const { return m_state; }
     void setState(ZombieState state);
 
-    // ¼õÉÙÉúÃüÖµ£¨±»¹¥»÷Ê±µ÷ÓÃ£©
+    // å‡å°‘ç”Ÿå‘½å€¼ï¼ˆè¢«æ”»å‡»æ—¶è°ƒç”¨ï¼‰
     void takeDamage(int damage);
 
-    // ¼ì²éÊÇ·ñÒÑËÀÍö
+    // æ£€æŸ¥æ˜¯å¦å·²æ­»äº¡
     bool isDead() const { return m_hp <= 0 || m_state == ZombieState::DEAD; }
 
-    // »ñÈ¡ºÍÉèÖÃÄ¿±êÖ²Îï
+    // è·å–å’Œè®¾ç½®ç›®æ ‡æ¤ç‰©
     void setTarget(Plant* plant) { m_target = plant; }
     Plant* getTarget() const { return m_target; }
 
+    // è®¾ç½®åœºæ™¯å¼•ç”¨
+    void setScene(GameScene* scene);
+    // æ›´æ–°é€Ÿåº¦ï¼ˆè€ƒè™‘æ¸¸æˆé€Ÿåº¦ï¼‰
+    void updateSpeedWithGameSpeed(float gameSpeed);
 private:
     bool initZombie(ZombieType type);
-    
-    // ½©Ê¬ÊôĞÔ
+
+    // åƒµå°¸å±æ€§
     ZombieType m_type;
     ZombieState m_state;
-    float m_baseSpeed;      // »ù´¡ËÙ¶È
-    float m_speed;          // µ±Ç°ËÙ¶È
-    float m_attackDamage;   // ¹¥»÷Á¦
-    float m_attackInterval; // ¹¥»÷¼ä¸ô
-    float m_attackTimer;    // ¹¥»÷¼ÆÊ±Æ÷
-    
-    // ¼õËÙÏà¹ØÊôĞÔ
-    float m_slowFactor;     // ¼õËÙÒò×Ó (0.0-1.0)
-    float m_slowDuration;   // ¼õËÙ³ÖĞøÊ±¼ä
-    
-    // ¶¯»­Ïà¹Ø
-    cocos2d::Animation* m_moveAnimation;    // ÒÆ¶¯¶¯»­
-    cocos2d::Animation* m_attackAnimation;  // ¹¥»÷¶¯»­
-    
-    // AIÏà¹Ø
-    Plant* m_target;        // µ±Ç°¹¥»÷Ä¿±ê
-    
-    // ·½·¨
-    void move(float dt);    // ÒÆ¶¯Âß¼­
-    void attack(float dt);  // ¹¥»÷Âß¼­
-    void die();             // ËÀÍöÂß¼­
-    void findTarget();      // Ñ°ÕÒÄ¿±êÖ²Îï
-    bool checkCollisionWithPlant(Plant* plant) const; // ¼ì²éÓëÖ²ÎïµÄÅö×²
-    
-    // ¶¯»­Ïà¹Ø·½·¨
-    void createAnimations(); // ´´½¨¶¯»­
-    void playMoveAnimation(); // ²¥·ÅÒÆ¶¯¶¯»­
-    void playAttackAnimation(); // ²¥·Å¹¥»÷¶¯»­
-    
-    // »ñÈ¡½©Ê¬ÊôĞÔµÄ¸¨Öú·½·¨
+    GameScene* m_scene; // åœºæ™¯å¼•ç”¨ï¼Œç”¨äºè·å–æ¸¸æˆé€Ÿåº¦
+    float m_originalSpeed; // åŸå§‹é€Ÿåº¦ï¼ˆä¸è€ƒè™‘æ¸¸æˆé€Ÿåº¦ï¼‰
+    float m_baseSpeed;      // åŸºç¡€é€Ÿåº¦
+    float m_speed;          // å½“å‰é€Ÿåº¦
+    float m_attackDamage;   // æ”»å‡»åŠ›
+    float m_attackInterval; // æ”»å‡»é—´éš”
+    float m_attackTimer;    // æ”»å‡»è®¡æ—¶å™¨
+
+    // å‡é€Ÿç›¸å…³å±æ€§
+    float m_slowFactor;     // å‡é€Ÿå› å­ (0.0-1.0)
+    float m_slowDuration;   // å‡é€ŸæŒç»­æ—¶é—´
+
+    // åŠ¨ç”»ç›¸å…³
+    cocos2d::Animation* m_moveAnimation;    // ç§»åŠ¨åŠ¨ç”»
+    cocos2d::Animation* m_attackAnimation;  // æ”»å‡»åŠ¨ç”»
+
+    // æ¤ç‰©ç›¸å…³
+    Plant* m_target;        // å½“å‰æ”»å‡»ç›®æ ‡
+
+    // æ–¹æ³•
+    void move(float dt);    // ç§»åŠ¨é€»è¾‘
+    void attack(float dt);  // æ”»å‡»é€»è¾‘
+    void die();             // æ­»äº¡é€»è¾‘
+    void findTarget();      // å¯»æ‰¾ç›®æ ‡æ¤ç‰©
+    bool checkCollisionWithPlant(Plant* plant) const; // æ£€æŸ¥ä¸æ¤ç‰©çš„ç¢°æ’
+
+    // åŠ¨ç”»ç›¸å…³æ–¹æ³•
+    void createAnimations(); // åˆ›å»ºåŠ¨ç”»
+    void playMoveAnimation(); // æ’­æ”¾ç§»åŠ¨åŠ¨ç”»
+    void playAttackAnimation(); // æ’­æ”¾æ”»å‡»åŠ¨ç”»
+
+    // è·å–åƒµå°¸å±æ€§çš„è¾…åŠ©æ–¹æ³•
     int getHPForType(ZombieType type) const;
     float getSpeedForType(ZombieType type) const;
     float getAttackDamageForType(ZombieType type) const;

@@ -94,7 +94,7 @@ void GameScene::createPlantCard(PlantType type, const Vec2& position, float card
                 card->runAction(shake);
                 return false;
             }
-            
+
             // 检查阳光是否足够
             if (sunshineCount >= price) {
                 this->selectPlantCard(card, type);
@@ -165,7 +165,7 @@ void GameScene::createPlantCard(PlantType type, const Vec2& position, float card
     }
     cardCooldowns[type] = cooldownTime;
     cardCooldownTimers[type] = 0.0f;
-    
+
     // 建立植物类型到卡片和冷却遮罩的映射
     plantTypeToCardMap[type] = card;
     if (cooldownMask) {

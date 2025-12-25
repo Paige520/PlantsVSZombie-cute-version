@@ -27,7 +27,7 @@ void GameScene::placePlant(int row, int col) {
     float cooldownTime = cardCooldowns[selectedPlant];
     if (cooldownTime > 0.0f) {
         cardCooldownTimers[selectedPlant] = cooldownTime;
-        
+
         // 显示冷却遮罩
         auto maskIter = plantTypeToCooldownMaskMap.find(selectedPlant);
         if (maskIter != plantTypeToCooldownMaskMap.end()) {
@@ -61,26 +61,26 @@ bool GameScene::canPlacePlant(int row, int col) {
 // 在网格创建植物
 void GameScene::createPlantAtGrid(PlantType type, int row, int col) {
     CCLOG("INFO: createPlantAtGrid called with type %d, row %d, col %d", (int)type, row, col);
-    
+
     // 使用Plant::createPlant()方法创建植物实例
     auto plant = Plant::createPlant(type);
     if (!plant) {
         CCLOG("ERROR: Failed to create plant instance for type %d", (int)type);
         return;
     }
-    
+
     CCLOG("INFO: Plant instance created successfully");
 
     // 设置植物位置和大小
     Vec2 gridCenter = getGridCenter(row, col);
     CCLOG("INFO: Grid center at (%.2f, %.2f)", gridCenter.x, gridCenter.y);
-    
+
     Size plantSize = plant->getContentSize();
     CCLOG("INFO: Plant content size (%.2f, %.2f)", plantSize.width, plantSize.height);
-    
+
     float plantScale = cellWidth / plantSize.height * 1.2f;
     CCLOG("INFO: Plant scale factor %.2f", plantScale);
-    
+
     plant->setScale(plantScale);
     plant->setPosition(gridCenter);
 
@@ -100,10 +100,10 @@ void GameScene::createPlantAtGrid(PlantType type, int row, int col) {
 
     // 设置植物的场景引用，以便植物可以与场景交互（如产生阳光、发射子弹等）
     plant->setScene(this);
-    
+
     // 设置植物的网格位置
     plant->setGridPosition(row, col);
-    
+
     CCLOG("INFO: Plant scene reference set");
 }
 

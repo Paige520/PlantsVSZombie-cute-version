@@ -63,10 +63,10 @@ void GameScene::generateSunshine() {
 
     // 创建阳光（从商店下沿开始）
     Vec2 sunshinePos = Vec2(randomX, shopBottomY);
-    createSunshine(sunshinePos);
+    createSunshine(sunshinePos, false);
 }
 // 创建阳光精灵
-void GameScene::createSunshine(const Vec2& position) {
+void GameScene::createSunshine(const Vec2& position,bool fromSunflower ) {
     // 创建阳光
     auto sunshine = Sprite::create("sunshine.png");
 
@@ -83,16 +83,16 @@ void GameScene::createSunshine(const Vec2& position) {
     // 1. 初始状态：缩小、透明
     sunshine->setScale(0.1f);
     sunshine->setOpacity(0);
-    
+
     // 2. 入场动画：放大到正常大小、淡入、旋转
     auto scaleTo = ScaleTo::create(0.5f, sunshineScale);
     auto fadeIn = FadeIn::create(0.5f);
     auto rotate = RotateTo::create(0.5f, 360);
-    
+
     // 3. 播放入场动画
     auto spawn = Spawn::create(scaleTo, fadeIn, rotate, nullptr);
     sunshine->runAction(spawn);
-    
+
     // 4. 入场后添加阳光闪烁效果
     auto fadeOut = FadeTo::create(0.5f, 200);
     auto fadeInLoop = FadeTo::create(0.5f, 255);
@@ -100,17 +100,47 @@ void GameScene::createSunshine(const Vec2& position) {
     auto blinkForever = RepeatForever::create(blink);
     sunshine->runAction(Sequence::create(DelayTime::create(0.5f), blinkForever, nullptr));
 
-    // 添加下落动画：优化阳光掉落效果，确保垂直下落
-    // 获取阳光生成位置对应的格子坐标
-    std::pair<int, int> gridPos = getGridFromPosition(position);
-    int row = gridPos.first;
-    int col = gridPos.second;
-    
-    // 计算该格子的中心位置作为下落目标（确保垂直下落）
-    Vec2 targetPos = getGridCenter(row, col);
-    // 确保阳光垂直下落，X坐标保持不变
-    targetPos.x = position.x;
-    
+    // 计算下落目标位置
+    Vec2 targetPos;
+
+    if (fromSunflower) {
+        // 向日葵生成的阳光：落在当前网格中心
+        auto gridPos = getGridFromPosition(position);
+        int row = gridPos.first;
+        int col = gridPos.second;
+
+        if (row != -1 && col != -1) {
+            targetPos = getGridCenter(row, col);
+        }
+        else {
+            // 如果无法确定网格，使用原位置下方
+            targetPos = Vec2(position.x, position.y - 100);
+        }
+    }
+    else {
+        // 随机生成的阳光：落在最下面的草坪网格（第0行）
+        auto gridPos = getGridFromPosition(position);
+        int col = gridPos.second;
+
+        if (col != -1) {
+            // 确保列在有效范围内
+            col = std::max(0, std::min(col, GRID_COLS - 1));
+            // 落在最下面一行（第0行）
+            targetPos = getGridCenter(0, col);
+        }
+        else {
+            // 如果无法确定列，随机选择最下面一行的列
+            std::random_device rd;
+            std::mt19937 gen(rd());
+            std::uniform_int_distribution<> dis(0, GRID_COLS - 1);
+            int randomCol = dis(gen);
+            targetPos = getGridCenter(0, randomCol);
+        }
+
+        // 确保阳光垂直下落，X坐标保持不变
+        targetPos.x = position.x;
+    }
+
     // 优化下落动画，使其更加流畅自然
     auto moveDown = MoveTo::create(4.0f / speed, targetPos);
     auto easeInOut = EaseInOut::create(moveDown, 2.0f); // 使用EaseInOut使动画更自然

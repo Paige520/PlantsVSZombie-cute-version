@@ -23,7 +23,6 @@ void GameScene::playBackgroundMusic() {
     if (!musicEnabled) return;
 
     // 播放游戏背景音乐
-    // 音乐文件路径可以根据实际情况修改
     std::string musicFile = "daytime.mp3"; 
     auto fileUtils = FileUtils::getInstance();
   

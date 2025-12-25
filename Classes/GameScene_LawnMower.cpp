@@ -95,8 +95,13 @@ void GameScene::clearZombiesInRow(int row) {
     // 移除该行的所有僵尸
     for (auto& zombie : zombiesToRemove) {
         if (zombie) {
-            // 设置僵尸死亡
+            // 停止僵尸的所有动作
+            zombie->stopAllActions();
+            // 设置僵尸状态为死亡
+            zombie->setState(ZombieState::DEAD);
             zombie->setHP(0);
+            // 从数组中移除
+            zombies.eraseObject(zombie);
 
             // 播放僵尸被碾压的动画
             auto fadeOut = FadeOut::create(0.2f);
@@ -114,6 +119,7 @@ void GameScene::clearZombiesInRow(int row) {
         }
     }
 }
+
 // 获取僵尸所在的行（根据Y坐标判断）
 int GameScene::getZombieRow(Zombie* zombie) {
     if (!zombie) 

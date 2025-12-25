@@ -119,10 +119,10 @@ void GameScene::update(float dt) {
     for (auto& pair : cardCooldownTimers) {
         PlantType plantType = pair.first;
         float& timer = pair.second;
-        
+
         if (timer > 0.0f) {
             timer -= dt;
-            
+
             // 更新冷却遮罩的显示
             auto maskIter = plantTypeToCooldownMaskMap.find(plantType);
             if (maskIter != plantTypeToCooldownMaskMap.end()) {
@@ -131,12 +131,13 @@ void GameScene::update(float dt) {
                 if (cooldownTime > 0.0f) {
                     // 计算当前冷却进度（0.0 - 1.0）
                     float progress = timer / cooldownTime;
-                    
+
                     // 更新遮罩的显示
                     if (progress > 0.0f) {
                         mask->setVisible(true);
                         // 这里可以添加进度条效果，比如遮罩的透明度或高度变化
-                    } else {
+                    }
+                    else {
                         mask->setVisible(false);
                         timer = 0.0f;
                     }
@@ -144,13 +145,13 @@ void GameScene::update(float dt) {
             }
         }
     }
-    
-    // 更新僵尸系统
-    updateZombies(dt);
-    
-    // 更新子弹系统
-    updateBullets(dt);
-    
+
     // 更新推车系统
     updateLawnMowers(dt);
+
+    // 更新僵尸系统
+    updateZombies(dt);
+
+    // 更新子弹系统
+    updateBullets(dt);   
 }

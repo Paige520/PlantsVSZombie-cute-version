@@ -27,6 +27,9 @@ bool SelectScene::init() {
 	background->setScale(scale);
 	this->addChild(background, 0);
 
+    //播放
+    _bgmAudioId = AudioEngine::play2d("ready.mp3", true);
+
 	createStartButton();
 	createExitButton();
 
@@ -72,6 +75,9 @@ void SelectScene::createStartButton() {
             auto scaleDown = ScaleTo::create(0.1f, 1.0f);
             auto sequence = Sequence::create(scaleUp, scaleDown, nullptr);
             button->runAction(sequence);
+
+            // 停止背景音乐
+            AudioEngine::stop(_bgmAudioId);
 
             // 延迟一小段时间后跳转到游戏场景
             this->runAction(Sequence::create(
@@ -127,6 +133,9 @@ void SelectScene::createExitButton() {
             auto scaleDown = ScaleTo::create(0.1f, 1.0f);
             auto sequence = Sequence::create(scaleUp, scaleDown, nullptr);
             exitLabel->runAction(sequence);
+
+            // 停止背景音乐
+            AudioEngine::stop(_bgmAudioId);
 
             // 延迟一小段时间后退出游戏
             auto scene = Director::getInstance()->getRunningScene();

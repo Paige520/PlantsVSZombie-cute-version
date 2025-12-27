@@ -12,8 +12,8 @@ public:
 	//Ìø×ª
 	void transitionToGameScene();
 private:
+	//ÒôÀÖ
 	int _bgmAudioId;
-
     // ´´½¨UI
     void createStartButton();
 	void createExitButton();

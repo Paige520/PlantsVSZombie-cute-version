@@ -33,7 +33,7 @@ public:
 
     // 重写 update，用于处理植物逻辑（如发射子弹、产生阳光）
     virtual void update(float dt) override;
-    
+
     // 重写基类的hp方法，兼容旧代码
     virtual void setHp(int hp) override; // 重写基类方法
     virtual int getHp() const override; // 重写基类方法
@@ -45,13 +45,13 @@ public:
     static int getCost(PlantType type);
     static float getCooldown(PlantType type);
     static float getAttackInterval(PlantType type);
-    
+
     // 设置场景引用
     void setScene(GameScene* scene) { m_scene = scene; }
-    
+
     // 设置网格位置
     void setGridPosition(int row, int col) { m_gridRow = row; m_gridCol = col; }
-    
+
     // 获取网格位置
     int getGridRow() const { return m_gridRow; }
     int getGridCol() const { return m_gridCol; }
@@ -62,20 +62,21 @@ private:
     GameScene* m_scene; // 场景引用，用于植物与场景交互
     int m_gridRow;     // 植物所在网格行
     int m_gridCol;     // 植物所在网格列
-    
+
     // 植物属性
     float m_attackInterval;   // 攻击间隔
     float m_attackTimer;      // 攻击计时器
     float m_sunProductionTime; // 阳光产生时间
     float m_sunTimer;         // 阳光产生计时器
-    
+
     // 血量相关
     int m_health;             // 当前血量
     int m_maxHealth;          // 最大血量
+
     // 樱桃炸弹爆炸标志
     bool m_hasExploded;
     cocos2d::ProgressTimer* m_healthBar; // 血条显示
-    
+
     // 方法
     void shootBullet();       // 发射子弹
     void produceSunshine();   // 产生阳光
@@ -85,19 +86,19 @@ private:
 
 public:
     void takeDamage(int damage); // 受到伤害（公开方法，供其他类调用）
-    
+
     // 获取植物属性的辅助方法
     float getAttackIntervalForType(PlantType type) const;
     float getSunProductionTimeForType(PlantType type) const;
     int getMaxHealthForType(PlantType type) const;
-    
+
     // 血量相关的get/set方法
     int getHealth() const { return m_health; }
     int getMaxHealth() const { return m_maxHealth; }
     void setHealth(int health);
     void setMaxHealth(int maxHealth) { m_maxHealth = maxHealth; }
     bool isDead() const { return m_health <= 0; } // 公开方法，供其他类调用
-    
+
     // 智能攻击相关方法
     bool hasZombieInRow();                               // 检测行内是否有僵尸
     Zombie* getClosestZombieInRange(float range);        // 获取范围内的最近僵尸
@@ -111,27 +112,27 @@ public:
     static Bullet* createBullet(BulletType type);
     virtual void update(float dt) override;
     virtual ~Bullet();  // 析构函数声明
-    
+
     // 设置和获取伤害值
     void setDamage(int damage) { m_damage = damage; }
     int getDamage() const { return m_damage; }
-    
+
     // 设置和获取速度
     void setSpeed(float speed) { m_speed = speed; }
     float getSpeed() const { return m_speed; }
-    
+
     // 设置和获取子弹类型
     void setBulletType(BulletType type) { m_type = type; }
     BulletType getBulletType() const { return m_type; }
-    
+
     // 设置是否是穿透型子弹
     void setPiercing(bool piercing) { m_isPiercing = piercing; }
     bool isPiercing() const { return m_isPiercing; }
-    
+
     // 设置和获取是否死亡
     void setIsDead(bool dead) { m_isDead = dead; }
     bool getIsDead() const { return m_isDead; }
-    
+
     // 切换为火焰子弹
     void switchToFireBullet();
 

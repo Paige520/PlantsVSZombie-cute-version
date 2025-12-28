@@ -4,8 +4,9 @@
 #include "GameObject.h"
 #include "cocos2d.h"
 
-// 前向声明GameScene类，避免循环引用
+// 前向声明GameScene和Zombie类，避免循环引用
 class GameScene;
+class Zombie;
 
 // 定义植物类型枚举
 enum class PlantType {
@@ -96,6 +97,12 @@ public:
     void setHealth(int health);
     void setMaxHealth(int maxHealth) { m_maxHealth = maxHealth; }
     bool isDead() const { return m_health <= 0; } // 公开方法，供其他类调用
+    
+    // 智能攻击相关方法
+    bool hasZombieInRow();                               // 检测行内是否有僵尸
+    Zombie* getClosestZombieInRange(float range);        // 获取范围内的最近僵尸
+    float getAttackRange() const;                        // 获取攻击范围
+    float getDistanceToZombie(Zombie* zombie) const;     // 计算到僵尸的距离
 };
 
 // 子弹类

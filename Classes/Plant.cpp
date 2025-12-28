@@ -1,5 +1,6 @@
 #include "Plant.h"
 #include "GameScene.h"
+#include "Zombie.h"
 
 using namespace cocos2d;
 
@@ -73,7 +74,7 @@ bool Plant::initPlant(PlantType type) {
         return false;
     }
 
-    this->scheduleUpdate(); // 开启 update 调度
+    this->scheduleUpdate(); // 开启 update 调度 
     showHealthBar();        // 显示血条
     return true;
 }
@@ -157,11 +158,43 @@ void Plant::update(float dt) {
     switch (m_type) {
     case PlantType::PEASHOOTER:
     case PlantType::SNOWPEA: {
-        // 攻击型植物：计时发射子弹
+        // 检查植物状态
+        if (this->isDead() || m_health <= 0) {
+            break; // 植物已死亡，无法攻击
+        }
+        
+        // 检查场景引用
+        if (!m_scene) {
+            CCLOG("[豌豆射手调试] ? 场景引用为空！");
+            break;
+        }
+        
+        // 攻击型植物：智能攻击逻辑
         m_attackTimer += dt;
+        
         if (m_attackTimer >= m_attackInterval) {
-            shootBullet();
-            m_attackTimer = 0.0f;
+            // 先进行快速行内检测，避免不必要的计算
+            if (hasZombieInRow()) {
+                // 智能检测：优先攻击范围内最近的僵尸
+                float attackRange = getAttackRange();
+                CCLOG("[豌豆射手调试] 攻击范围: %.1f 像素", attackRange);
+                
+                Zombie* targetZombie = getClosestZombieInRange(attackRange);
+                if (targetZombie) {
+                    float distance = getDistanceToZombie(targetZombie);
+                    CCLOG("[豌豆射手调试] ? 找到目标僵尸，距离: %.1f (在%.1f像素范围内)，准备发射子弹！", 
+                          distance, attackRange);
+                    shootBullet();
+                    m_attackTimer = 0.0f;
+                } else {
+                    CCLOG("[豌豆射手调试] ? 行内有僵尸但攻击范围内没有目标 (范围%.1f像素)", attackRange);
+                }
+            } else {
+                CCLOG("[豌豆射手调试] ? 行内没有僵尸，不进行攻击");
+            }
+        } else {
+            CCLOG("[豌豆射手调试] ? 攻击冷却中，还需等待 %.2f 秒", 
+                  m_attackInterval - m_attackTimer);
         }
         break;
     }
@@ -485,4 +518,137 @@ void Bullet::switchToFireBullet() {
 
     // 火焰子弹伤害翻倍
     m_damage = m_damage * 2;
+}
+
+// 智能攻击相关方法实现
+bool Plant::hasZombieInRow() {
+    if (!m_scene) {
+        CCLOG("[豌豆射手调试] ? 场景引用为空！");
+        return false;
+    }
+
+    // 获取植物所在行的所有僵尸
+    Vector<Zombie*>& zombies = m_scene->getZombies();
+    float plantY = this->getPositionY();
+    
+    CCLOG("[豌豆射手调试] 植物位置 Y: %.1f, 僵尸数量: %d", plantY, zombies.size());
+
+    // 检测同一水平行内的僵尸
+    for (auto& zombie : zombies) {
+        if (!zombie || zombie->isDead()) continue;
+
+        float zombieY = zombie->getPositionY();
+        float distance = std::abs(plantY - zombieY);
+        CCLOG("[豌豆射手调试] 僵尸 Y: %.1f, 垂直距离: %.1f", zombieY, distance);
+        
+        // 扩大容错范围从20像素到40像素，提高行内检测的成功率
+        if (distance <= 40.0f) {
+            CCLOG("[豌豆射手调试] ? 找到行内僵尸！植物Y: %.1f, 僵尸Y: %.1f, 距离: %.1f", 
+                  plantY, zombieY, distance);
+            return true;
+        }
+    }
+    CCLOG("[豌豆射手调试] ? 未找到行内僵尸。植物Y: %.1f, 僵尸数量: %d", 
+          plantY, zombies.size());
+    return false;
+}
+
+Zombie* Plant::getClosestZombieInRange(float range) {
+    if (!m_scene) {
+        CCLOG("[豌豆射手调试] ? getClosestZombieInRange: 场景引用为空");
+        return nullptr;
+    }
+
+    Vector<Zombie*>& zombies = m_scene->getZombies();
+    Zombie* closestZombie = nullptr;
+    float closestDistance = FLT_MAX;
+    float plantX = this->getPositionX();
+    float plantY = this->getPositionY();
+
+    // 检查是否为豌豆射手或寒冰豌豆射手（这些植物不受攻击范围限制）
+    bool isPeaShooter = (m_type == PlantType::PEASHOOTER || m_type == PlantType::SNOWPEA);
+    
+    if (isPeaShooter) {
+        CCLOG("[豌豆射手调试] ? 豌豆射手/寒冰豌豆射手不受攻击范围限制，开始搜索同行僵尸...");
+    } else {
+        CCLOG("[豌豆射手调试] ? 开始搜索攻击范围内的最近僵尸，植物位置: (%.1f, %.1f), 攻击范围: %.1f", 
+              plantX, plantY, range);
+    }
+
+    for (auto& zombie : zombies) {
+        if (!zombie || zombie->isDead()) continue;
+
+        float zombieY = zombie->getPositionY();
+        float zombieX = zombie->getPositionX();
+
+        // 使用与 hasZombieInRow() 相同的40像素容错范围，确保检测一致性
+        if (std::abs(plantY - zombieY) <= 40.0f) {
+            float distance = getDistanceToZombie(zombie);
+            
+            if (isPeaShooter) {
+                // 豌豆射手和寒冰豌豆射手：只要是同行僵尸就攻击，不受距离限制
+                if (distance > 0 && distance < closestDistance) {
+                    closestDistance = distance;
+                    closestZombie = zombie;
+                    CCLOG("[豌豆射手调试] ? 豌豆射手找到同行僵尸: 位置(%.1f, %.1f), 距离%.1f", 
+                          zombieX, zombieY, distance);
+                }
+            } else {
+                // 其他植物：受攻击范围限制
+                CCLOG("[豌豆射手调试] ? 同行僵尸检测: 僵尸位置(%.1f, %.1f), 距离%.1f, 在范围内: %s", 
+                      zombieX, zombieY, distance, 
+                      (distance > 0 && distance <= range) ? "是" : "否");
+                
+                if (distance > 0 && distance <= range && distance < closestDistance) {
+                    closestDistance = distance;
+                    closestZombie = zombie;
+                    CCLOG("[豌豆射手调试] ? 更新最近目标: 距离%.1f", distance);
+                }
+            }
+        } else {
+            if (!isPeaShooter) {
+                CCLOG("[豌豆射手调试] ? 僵尸不在同行: 植物Y=%.1f, 僵尸Y=%.1f, 垂直距离%.1f > 40像素", 
+                      plantY, zombieY, std::abs(plantY - zombieY));
+            }
+        }
+    }
+
+    if (closestZombie) {
+        if (isPeaShooter) {
+            CCLOG("[豌豆射手调试] ? 豌豆射手找到目标僵尸，距离: %.1f像素 (无攻击范围限制)", closestDistance);
+        } else {
+            CCLOG("[豌豆射手调试] ? 找到最近目标僵尸，距离: %.1f像素 (攻击范围%.1f像素)", closestDistance, range);
+        }
+    } else {
+        if (isPeaShooter) {
+            CCLOG("[豌豆射手调试] ? 豌豆射手没有找到同行僵尸");
+        } else {
+            CCLOG("[豌豆射手调试] ? 攻击范围内没有找到目标僵尸 (攻击范围%.1f像素)", range);
+        }
+    }
+
+    return closestZombie;
+}
+
+float Plant::getAttackRange() const {
+    switch (m_type) {
+    case PlantType::PEASHOOTER:
+    case PlantType::SNOWPEA:
+        return 400.0f; // 400像素的攻击范围
+    default:
+        return 0.0f;
+    }
+}
+
+float Plant::getDistanceToZombie(Zombie* zombie) const {
+    if (!zombie) return FLT_MAX;
+
+    float plantX = this->getPositionX();
+    float zombieX = zombie->getPositionX();
+
+    // 只考虑植物右侧的僵尸
+    if (zombieX > plantX) {
+        return zombieX - plantX;
+    }
+    return -1.0f; // 僵尸在左侧，返回负值表示不在攻击范围
 }

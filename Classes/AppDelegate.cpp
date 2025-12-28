@@ -41,7 +41,8 @@ AppDelegate::~AppDelegate()
 void AppDelegate::initGLContextAttrs()
 {
     // set OpenGL context attributes: red,green,blue,alpha,depth,stencil,multisamplesCount
-    GLContextAttrs glContextAttrs = {8, 8, 8, 8, 24, 8, 0};
+    // 优化移动端性能：降低深度缓冲区，使用RGBA8888格式
+    GLContextAttrs glContextAttrs = {8, 8, 8, 8, 16, 8, 0};
 
     GLView::setGLContextAttrs(glContextAttrs);
 }
@@ -72,21 +73,33 @@ bool AppDelegate::applicationDidFinishLaunching() {
     // set FPS. the default value is 1.0/60 if you don't call this
     director->setAnimationInterval(1.0f / 60);
 
-    // Set the design resolution分辨率
-    glview->setDesignResolutionSize(designResolutionSize.width, designResolutionSize.height, ResolutionPolicy::NO_BORDER);
+    // Set the design resolution分辨率 - 优化移动端适配
+    // 使用SHOW_ALL策略确保在所有设备上都能完整显示
+    glview->setDesignResolutionSize(designResolutionSize.width, designResolutionSize.height, ResolutionPolicy::SHOW_ALL);
     auto frameSize = glview->getFrameSize();
-#if 0
-    // if the frame's height is larger than the height of medium size.
+    
+    // 移动端优化：动态调整内容缩放因子
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID) || (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+    // 移动设备使用自适应缩放
+    if (frameSize.height > frameSize.width) {
+        // 竖屏设备（平板等）
+        director->setContentScaleFactor(MIN(frameSize.height/designResolutionSize.height, 
+                                           frameSize.width/designResolutionSize.width));
+    } else {
+        // 横屏设备（手机）
+        director->setContentScaleFactor(MIN(frameSize.width/designResolutionSize.width,
+                                           frameSize.height/designResolutionSize.height));
+    }
+#else
+    // PC端保持原有逻辑
     if (frameSize.height > mediumResolutionSize.height)
     {        
         director->setContentScaleFactor(MIN(largeResolutionSize.height/designResolutionSize.height, largeResolutionSize.width/designResolutionSize.width));
     }
-    // if the frame's height is larger than the height of small size.
     else if (frameSize.height > smallResolutionSize.height)
     {        
         director->setContentScaleFactor(MIN(mediumResolutionSize.height/designResolutionSize.height, mediumResolutionSize.width/designResolutionSize.width));
     }
-    // if the frame's height is smaller than the height of medium size.
     else
     {        
         director->setContentScaleFactor(MIN(smallResolutionSize.height/designResolutionSize.height, smallResolutionSize.width/designResolutionSize.width));

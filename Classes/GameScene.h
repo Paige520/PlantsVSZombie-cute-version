@@ -1,4 +1,4 @@
-ï»¿#ifndef __GAME_SCENE_H__
+#ifndef __GAME_SCENE_H__
 #define __GAME_SCENE_H__
 #include "cocos2d.h"
 #include "Plant.h"
@@ -13,30 +13,30 @@ public:
 
     CREATE_FUNC(GameScene);
 
-    // é˜³å…‰ç”Ÿæˆï¼ˆéšæœº+å‘æ—¥è‘µï¼‰
+    // Ñô¹âÉú³É£¨Ëæ»ú+ÏòÈÕ¿û£©
     void createSunshine(const cocos2d::Vec2& position, bool fromSunflower = false);
 
-    //å…¨å±€é€Ÿåº¦
-    float speed;                              // æ¸¸æˆé€Ÿåº¦ (1.0/1.5/2.0)
+    //È«¾ÖËÙ¶È
+    float speed;                              // ÓÎÏ·ËÙ¶È (1.0/1.5/2.0)
     float getGameSpeed() const { return speed; }
   
 
-    // æ¤ç‰©ç®¡ç†ç›¸å…³å‡½æ•°
-    void removePlantFromGrid(int row, int col); // ä»ç½‘æ ¼ç§»é™¤æ¤ç‰©
-    void handleCherryBombExplosion(int row, int col); // å¤„ç†æ¨±æ¡ƒç‚¸å¼¹çˆ†ç‚¸ä¼¤å®³
-    void addBullet(Bullet* bullet); // æ·»åŠ å­å¼¹åˆ°å®¹å™¨
-    virtual void update(float dt) override; // æ¯å¸§æ›´æ–°
+    // Ö²Îï¹ÜÀíÏà¹Øº¯Êı
+    void removePlantFromGrid(int row, int col); // ´ÓÍø¸ñÒÆ³ıÖ²Îï
+    void handleCherryBombExplosion(int row, int col); // ´¦ÀíÓ£ÌÒÕ¨µ¯±¬Õ¨ÉËº¦
+    void addBullet(Bullet* bullet); // Ìí¼Ó×Óµ¯µ½ÈİÆ÷
+    virtual void update(float dt) override; // Ã¿Ö¡¸üĞÂ
 
-    //æ¸¸æˆç»“æŸåˆ¤å®š(åƒµå°¸èƒœåˆ©)
+    //ÓÎÏ·½áÊøÅĞ¶¨(½©Ê¬Ê¤Àû)
     void gameOver();
     void showGameOverMenu(const cocos2d::Size& visibleSize, cocos2d::LayerColor* gameOverLayer);
 
-    // éŸ³ä¹æ§åˆ¶ç›¸å…³
+    // ÒôÀÖ¿ØÖÆÏà¹Ø
     cocos2d::experimental::AudioProfile* audioProfile;
     bool musicEnabled;
     float musicVolume;
-    float soundEffectVolume; // éŸ³æ•ˆéŸ³é‡
-    // éŸ³ä¹æ§åˆ¶æ–¹æ³•
+    float soundEffectVolume; // ÒôĞ§ÒôÁ¿
+    // ÒôÀÖ¿ØÖÆ·½·¨
     void initAudioSystem();
     void playBackgroundMusic();
     void pauseBackgroundMusic();
@@ -44,12 +44,17 @@ public:
     void stopBackgroundMusic();
     void setMusicVolume(float volume);
     bool isMusicPlaying();
+    void playSoundEffect(const std::string& soundFile);
+    void setSoundEffectVolume(float volume);
+    
+    // ¹«¿ª·ÃÎÊ·½·¨£¬¹©Ö²ÎïÏµÍ³Ê¹ÓÃ
+    Vector<Zombie*>& getZombies();
 private:
-    // æ¸¸æˆèƒŒæ™¯å…ƒç´ 
+    // ÓÎÏ·±³¾°ÔªËØ
     cocos2d::Sprite* background = Sprite::create("fightbackground.jpg");
     cocos2d::Sprite* shop = Sprite::create("Shop.png");
 
-    // èƒŒæ™¯å›¾ä¿¡æ¯
+    // ±³¾°Í¼ĞÅÏ¢
     float scaledBgWidth;
     float scaledBgHeight;
     float bgScreenStartX;
@@ -57,101 +62,101 @@ private:
     float bgScreenEndX;
     float bgScreenEndY;
 
-    // ç½‘æ ¼ç³»ç»Ÿ
+    // Íø¸ñÏµÍ³
     static const int GRID_ROWS = 5;
     static const int GRID_COLS = 9;
-    float gridStartX;     // è‰åœ°ç½‘æ ¼èµ·å§‹Xåæ ‡
-    float gridStartY;     // è‰åœ°ç½‘æ ¼èµ·å§‹Yåæ ‡
-    float gridWidth;      // è‰åœ°ç½‘æ ¼å®½åº¦
-    float gridHeight;     // è‰åœ°ç½‘æ ¼é«˜åº¦
-    float cellWidth;      // å•å…ƒæ ¼å®½åº¦
-    float cellHeight;     // å•å…ƒæ ¼é«˜åº¦
+    float gridStartX;     // ²İµØÍø¸ñÆğÊ¼X×ø±ê
+    float gridStartY;     // ²İµØÍø¸ñÆğÊ¼Y×ø±ê
+    float gridWidth;      // ²İµØÍø¸ñ¿í¶È
+    float gridHeight;     // ²İµØÍø¸ñ¸ß¶È
+    float cellWidth;      // µ¥Ôª¸ñ¿í¶È
+    float cellHeight;     // µ¥Ôª¸ñ¸ß¶È
 
-    // é˜³å…‰ç³»ç»Ÿç›¸å…³
+    // Ñô¹âÏµÍ³Ïà¹Ø
     cocos2d::Label* sunshineLabel;
     int sunshineCount;
     cocos2d::Sprite* sunshineIcon;
     cocos2d::Vector<cocos2d::Sprite*> sunshines;
 
-    //èœå•è®¾ç½®
-    cocos2d::Menu* pauseMenu;                 // æš‚åœèœå•
-    cocos2d::LayerColor* pauseLayer;          // æš‚åœèƒŒæ™¯å±‚
-    cocos2d::Label* speedLabel;               // é€Ÿåº¦æ˜¾ç¤ºæ ‡ç­¾
+    //²Ëµ¥ÉèÖÃ
+    cocos2d::Menu* pauseMenu;                 // ÔİÍ£²Ëµ¥
+    cocos2d::LayerColor* pauseLayer;          // ÔİÍ£±³¾°²ã
+    cocos2d::Label* speedLabel;               // ËÙ¶ÈÏÔÊ¾±êÇ©
 
-    // åˆå§‹åŒ–å‡½æ•°
+    // ³õÊ¼»¯º¯Êı
     void initBackground();
     void initShop();
     void initGrid();
     void initSunshineSystem();
     void generateSunshine();
 
-    // å·¥å…·å‡½æ•°
+    // ¹¤¾ßº¯Êı
     void calculateBackgroundInfo();
-    // åæ ‡è½¬æ¢å‡½æ•°
+    // ×ø±ê×ª»»º¯Êı
     cocos2d::Vec2 getGridCenter(int row, int col);
     std::pair<int, int> getGridFromPosition(const cocos2d::Vec2& position);
     bool isGridPositionValid(int row, int col);
 
-    // é˜³å…‰ç›¸å…³å‡½æ•°
+    // Ñô¹âÏà¹Øº¯Êı
     void collectSunshine(cocos2d::Sprite* sunshine);
     void updateSunshineCount(int delta);
-    cocos2d::Vector<cocos2d::Sprite*>& getSunshines(); // è·å–é˜³å…‰å®¹å™¨çš„å¼•ç”¨ï¼Œä¾›æ¤ç‰©ç³»ç»Ÿä½¿ç”¨
+    cocos2d::Vector<cocos2d::Sprite*>& getSunshines(); // »ñÈ¡Ñô¹âÈİÆ÷µÄÒıÓÃ£¬¹©Ö²ÎïÏµÍ³Ê¹ÓÃ
 
-    //èœå•ç›¸å…³å‡½æ•°
-    void createPauseButton();                  // åˆ›å»ºæš‚åœæŒ‰é’®
-    void createPauseMenu();                    // åˆ›å»ºæš‚åœèœå•ç•Œé¢
-    void showPauseMenu();                      // æ˜¾ç¤ºæš‚åœèœå•
-    void hidePauseMenu();                      // éšè—æš‚åœèœå•
-    void restartGame();                        // é‡æ–°å¼€å§‹æ¸¸æˆ
-    void exitToMainMenu();                     // è¿”å›ä¸»èœå•
-    void changeGameSpeed();                    // åˆ‡æ¢æ¸¸æˆé€Ÿåº¦
-    void updateSpeedLabel();                   // æ›´æ–°é€Ÿåº¦æ˜¾ç¤º
+    //²Ëµ¥Ïà¹Øº¯Êı
+    void createPauseButton();                  // ´´½¨ÔİÍ£°´Å¥
+    void createPauseMenu();                    // ´´½¨ÔİÍ£²Ëµ¥½çÃæ
+    void showPauseMenu();                      // ÏÔÊ¾ÔİÍ£²Ëµ¥
+    void hidePauseMenu();                      // Òş²ØÔİÍ£²Ëµ¥
+    void restartGame();                        // ÖØĞÂ¿ªÊ¼ÓÎÏ·
+    void exitToMainMenu();                     // ·µ»ØÖ÷²Ëµ¥
+    void changeGameSpeed();                    // ÇĞ»»ÓÎÏ·ËÙ¶È
+    void updateSpeedLabel();                   // ¸üĞÂËÙ¶ÈÏÔÊ¾
 
-    // æ¤ç‰©ç§æ¤ç›¸å…³
-    Sprite* selectedCard;                       // å½“å‰é€‰ä¸­çš„å¡ç‰‡
-    Vector<Sprite*> plantCards;                 // æ¤ç‰©å¡ç‰‡å®¹å™¨
-    PlantType selectedPlant;                    // å½“å‰é€‰ä¸­çš„æ¤ç‰©ç±»å‹
-    Sprite* plantingPreview;                    // ç§æ¤é¢„è§ˆç²¾çµ
-    Plant* gridPlants[GRID_ROWS][GRID_COLS]; // ç½‘æ ¼ä¸­çš„æ¤ç‰©æŒ‡é’ˆæ•°ç»„
+    // Ö²ÎïÖÖÖ²Ïà¹Ø
+    Sprite* selectedCard;                       // µ±Ç°Ñ¡ÖĞµÄ¿¨Æ¬
+    Vector<Sprite*> plantCards;                 // Ö²Îï¿¨Æ¬ÈİÆ÷
+    PlantType selectedPlant;                    // µ±Ç°Ñ¡ÖĞµÄÖ²ÎïÀàĞÍ
+    Sprite* plantingPreview;                    // ÖÖÖ²Ô¤ÀÀ¾«Áé
+    Plant* gridPlants[GRID_ROWS][GRID_COLS]; // Íø¸ñÖĞµÄÖ²ÎïÖ¸ÕëÊı×é
 
-    // æ¤ç‰©å¡ç‰‡å†·å´æ—¶é—´ç›¸å…³
-    std::map<PlantType, float> cardCooldowns;   // å„æ¤ç‰©ç±»å‹çš„å†·å´æ—¶é—´
-    std::map<PlantType, float> cardCooldownTimers; // å„æ¤ç‰©ç±»å‹çš„å†·å´æ—¶é—´è®¡æ—¶å™¨
-    Vector<Sprite*> cardCooldownMasks;          // å†·å´é®ç½©ç²¾çµå®¹å™¨
-    std::map<PlantType, Sprite*> plantTypeToCardMap; // æ¤ç‰©ç±»å‹åˆ°å¡ç‰‡çš„æ˜ å°„
-    std::map<PlantType, Sprite*> plantTypeToCooldownMaskMap; // æ¤ç‰©ç±»å‹åˆ°å†·å´é®ç½©çš„æ˜ å°„
-    void initPlantCards();                      // åˆå§‹åŒ–æ¤ç‰©å¡ç‰‡
-    void createPlantCard(PlantType type, const Vec2& position, float cardScale); // åˆ›å»ºæ¤ç‰©å¡ç‰‡
-    void selectPlantCard(Sprite* card, PlantType type);         // é€‰æ‹©æ¤ç‰©å¡ç‰‡
-    void unselectPlantCard();                   // å–æ¶ˆé€‰æ‹©æ¤ç‰©å¡ç‰‡
-    void placePlant(int row, int col);          // æ”¾ç½®æ¤ç‰©
-    void showPlantingPreview();                 // æ˜¾ç¤ºç§æ¤é¢„è§ˆ
-    void hidePlantingPreview();                 // éšè—ç§æ¤é¢„è§ˆ
-    bool canPlacePlant(int row, int col);       // æ£€æŸ¥æ˜¯å¦å¯ä»¥æ”¾ç½®æ¤ç‰©
-    void createPlantAtGrid(PlantType type, int row, int col);    // åœ¨ç½‘æ ¼åˆ›å»ºæ¤ç‰©
+    // Ö²Îï¿¨Æ¬ÀäÈ´Ê±¼äÏà¹Ø
+    std::map<PlantType, float> cardCooldowns;   // ¸÷Ö²ÎïÀàĞÍµÄÀäÈ´Ê±¼ä
+    std::map<PlantType, float> cardCooldownTimers; // ¸÷Ö²ÎïÀàĞÍµÄÀäÈ´Ê±¼ä¼ÆÊ±Æ÷
+    Vector<Sprite*> cardCooldownMasks;          // ÀäÈ´ÕÚÕÖ¾«ÁéÈİÆ÷
+    std::map<PlantType, Sprite*> plantTypeToCardMap; // Ö²ÎïÀàĞÍµ½¿¨Æ¬µÄÓ³Éä
+    std::map<PlantType, Sprite*> plantTypeToCooldownMaskMap; // Ö²ÎïÀàĞÍµ½ÀäÈ´ÕÚÕÖµÄÓ³Éä
+    void initPlantCards();                      // ³õÊ¼»¯Ö²Îï¿¨Æ¬
+    void createPlantCard(PlantType type, const Vec2& position, float cardScale); // ´´½¨Ö²Îï¿¨Æ¬
+    void selectPlantCard(Sprite* card, PlantType type);         // Ñ¡ÔñÖ²Îï¿¨Æ¬
+    void unselectPlantCard();                   // È¡ÏûÑ¡ÔñÖ²Îï¿¨Æ¬
+    void placePlant(int row, int col);          // ·ÅÖÃÖ²Îï
+    void showPlantingPreview();                 // ÏÔÊ¾ÖÖÖ²Ô¤ÀÀ
+    void hidePlantingPreview();                 // Òş²ØÖÖÖ²Ô¤ÀÀ
+    bool canPlacePlant(int row, int col);       // ¼ì²éÊÇ·ñ¿ÉÒÔ·ÅÖÃÖ²Îï
+    void createPlantAtGrid(PlantType type, int row, int col);    // ÔÚÍø¸ñ´´½¨Ö²Îï
 
-    // åƒµå°¸ç›¸å…³
-    Vector<Zombie*> zombies;  // å­˜å‚¨æ‰€æœ‰åƒµå°¸
-    float zombieSpawnTimer;   // åƒµå°¸ç”Ÿæˆè®¡æ—¶å™¨
-    float zombieSpawnInterval; // åƒµå°¸ç”Ÿæˆé—´éš”
-    void initZombieSystem();      // åˆå§‹åŒ–åƒµå°¸ç³»ç»Ÿ
-    void generateRandomZombie();  // éšæœºç”Ÿæˆåƒµå°¸
-    void updateZombies(float dt); // æ›´æ–°åƒµå°¸çŠ¶æ€
-    void checkPlantZombieCollision(); // æ£€æŸ¥æ¤ç‰©å’Œåƒµå°¸çš„ç¢°æ’
-    void removeDeadZombies();     // ç§»é™¤æ­»äº¡çš„åƒµå°¸
+    // ½©Ê¬Ïà¹Ø
+    Vector<Zombie*> zombies;  // ´æ´¢ËùÓĞ½©Ê¬
+    float zombieSpawnTimer;   // ½©Ê¬Éú³É¼ÆÊ±Æ÷
+    float zombieSpawnInterval; // ½©Ê¬Éú³É¼ä¸ô
+    void initZombieSystem();      // ³õÊ¼»¯½©Ê¬ÏµÍ³
+    void generateRandomZombie();  // Ëæ»úÉú³É½©Ê¬
+    void updateZombies(float dt); // ¸üĞÂ½©Ê¬×´Ì¬
+    void checkPlantZombieCollision(); // ¼ì²éÖ²ÎïºÍ½©Ê¬µÄÅö×²
+    void removeDeadZombies();     // ÒÆ³ıËÀÍöµÄ½©Ê¬
 
-    // å­å¼¹ç›¸å…³
-    Vector<Bullet*> bullets;  // å­˜å‚¨æ‰€æœ‰å­å¼¹
-    void initBulletSystem();      // åˆå§‹åŒ–å­å¼¹ç³»ç»Ÿ
-    void updateBullets(float dt); // æ›´æ–°å­å¼¹çŠ¶æ€
-    void checkBulletZombieCollision(); // æ£€æŸ¥å­å¼¹å’Œåƒµå°¸çš„ç¢°æ’
-    void checkBulletFireTreeCollision(); // æ£€æŸ¥å­å¼¹å’Œç«ç‚¬æ ‘æ¡©çš„ç¢°æ’
-    void removeDeadBullets();     // ç§»é™¤æ— æ•ˆçš„å­å¼¹
+    // ×Óµ¯Ïà¹Ø
+    Vector<Bullet*> bullets;  // ´æ´¢ËùÓĞ×Óµ¯
+    void initBulletSystem();      // ³õÊ¼»¯×Óµ¯ÏµÍ³
+    void updateBullets(float dt); // ¸üĞÂ×Óµ¯×´Ì¬
+    void checkBulletZombieCollision(); // ¼ì²é×Óµ¯ºÍ½©Ê¬µÄÅö×²
+    void checkBulletFireTreeCollision(); // ¼ì²é×Óµ¯ºÍ»ğ¾æÊ÷×®µÄÅö×²
+    void removeDeadBullets();     // ÒÆ³ıÎŞĞ§µÄ×Óµ¯
 
-    // æ¨è½¦ç³»ç»Ÿ
-    cocos2d::Sprite* lawnMowers[GRID_ROWS];      // æ¯è¡Œçš„æ¨è½¦ç²¾çµ
-    bool lawnMowerActive[GRID_ROWS];             // æ¨è½¦æ˜¯å¦æ¿€æ´»
-    // æ¨è½¦ç³»ç»Ÿæ–¹æ³•
+    // ÍÆ³µÏµÍ³
+    cocos2d::Sprite* lawnMowers[GRID_ROWS];      // Ã¿ĞĞµÄÍÆ³µ¾«Áé
+    bool lawnMowerActive[GRID_ROWS];             // ÍÆ³µÊÇ·ñ¼¤»î
+    // ÍÆ³µÏµÍ³·½·¨
     void initLawnMowerSystem();
     void createLawnMowerForRow(int row);
     void activateLawnMower(int row);

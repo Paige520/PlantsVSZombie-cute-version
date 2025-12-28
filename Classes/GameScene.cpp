@@ -113,6 +113,11 @@ Vector<Sprite*>& GameScene::getSunshines() {
     return sunshines;
 }
 
+// 获取僵尸容器的引用
+Vector<Zombie*>& GameScene::getZombies() {
+    return zombies;
+}
+
 // 更新方法，处理所有游戏逻辑更新
 void GameScene::update(float dt) {
     // 更新植物卡片冷却时间
